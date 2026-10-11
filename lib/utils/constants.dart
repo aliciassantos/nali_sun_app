@@ -1,0 +1,1 @@
+// Cores hexadecimais, chaves de API e URLs

@@ -1,0 +1,1 @@
+// Une DAO local com KindwiseService

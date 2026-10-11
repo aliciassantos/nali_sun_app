@@ -1,0 +1,1 @@
+// Captura e salvamento de fotos no armazenamento interno

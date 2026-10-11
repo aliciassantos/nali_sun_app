@@ -1,0 +1,1 @@
+// Fonte de dados para artigos e dicas

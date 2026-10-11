@@ -1,0 +1,1 @@
+// Comunicação REST com Kindwise API (Plant.id)

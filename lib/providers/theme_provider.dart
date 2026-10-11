@@ -1,0 +1,1 @@
+// Estado de alteração de tema

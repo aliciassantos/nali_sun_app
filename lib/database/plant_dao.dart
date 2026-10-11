@@ -1,0 +1,1 @@
+// Operações CRUD da tabela 'plants'

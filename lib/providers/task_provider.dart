@@ -1,0 +1,1 @@
+// Estado das tarefas do dia e calendário

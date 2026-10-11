@@ -1,0 +1,1 @@
+// Estado das plantas, filtros e lógica de rega

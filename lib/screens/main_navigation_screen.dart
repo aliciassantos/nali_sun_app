@@ -1,0 +1,1 @@
+// Tela contendo a BottomNavigationBar e IndexedStack
