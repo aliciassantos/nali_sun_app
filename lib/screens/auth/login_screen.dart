@@ -39,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _carregando = true);
-
     try {
       // Neste ponto, conectaremos o AuthService ao banco
       // de usuários e validaremos as credenciais cadastradas.
