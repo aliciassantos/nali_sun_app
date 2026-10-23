@@ -1,6 +1,9 @@
 // Registro
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 import '../../utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,56 +59,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return InputDecoration(
       hintText: dica,
-      hintStyle: const TextStyle(
-        color: Color(0x990B3740),
-        fontSize: 12,
-      ),
-      prefixIcon: Icon(
-        icone,
-        size: 19,
-        color: fundo,
-      ),
+      hintStyle: const TextStyle(color: Color(0x990B3740), fontSize: 12),
+      prefixIcon: Icon(icone, size: 19, color: fundo),
       suffixIcon: sufixo,
       filled: true,
       fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 13,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(
-          color: borda,
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: borda, width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(
-          color: borda,
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: borda, width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(
-          color: verde,
-          width: 1.8,
-        ),
+        borderSide: const BorderSide(color: verde, width: 1.8),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(
-          color: Colors.red,
-        ),
+        borderSide: const BorderSide(color: Colors.red),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(
-          color: Colors.red,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
     );
   }
@@ -131,31 +110,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _carregando = true);
 
     try {
-      // TODO: integrar com AuthService para salvar
-      // o usuário no banco e proteger a senha.
-      await Future<void>.delayed(
-        const Duration(milliseconds: 300),
+      final auth = context.read<AuthProvider>();
+
+      final sucesso = await auth.register(
+        _nomeController.text.trim(),
+        _emailController.text.trim(),
+        _senhaController.text,
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Dados válidos! Conecte o serviço de cadastro '
-            'para salvar sua conta.',
+      if (sucesso) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Conta criada com sucesso! Faça seu login.'),
           ),
-        ),
-      );
+        );
+
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              auth.errorMessage ?? 'Não foi possível criar sua conta.',
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Não foi possível criar sua conta.',
-          ),
-        ),
+        const SnackBar(content: Text('Ocorreu um erro ao criar sua conta.')),
       );
     } finally {
       if (mounted) {
@@ -171,14 +157,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 20,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 360,
-              ),
+              constraints: const BoxConstraints(maxWidth: 360),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -228,8 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Form(
                       key: _formKey,
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text(
                             'Criar conta',
@@ -246,10 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const Text(
                             'Comece a cuidar do seu jardim!',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: fundo,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: fundo, fontSize: 12),
                           ),
 
                           const SizedBox(height: 22),
@@ -260,8 +237,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _nomeController,
-                            textCapitalization:
-                                TextCapitalization.words,
+                            textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.next,
                             validator: _validarNome,
                             decoration: _decoracaoCampo(
@@ -278,8 +254,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _emailController,
-                            keyboardType:
-                                TextInputType.emailAddress,
+                            keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             autocorrect: false,
                             validator: Validators.validarEmail,
@@ -299,8 +274,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _senhaController,
                             obscureText: !_mostrarSenha,
                             textInputAction: TextInputAction.next,
-                            validator:
-                                Validators.validarSenhaCadastro,
+                            validator: Validators.validarSenhaCadastro,
                             decoration: _decoracaoCampo(
                               dica: 'Crie uma senha',
                               icone: Icons.lock_outline,
@@ -329,10 +303,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const Text(
                             'Use pelo menos 8 caracteres, '
                             'com maiúscula, minúscula e número.',
-                            style: TextStyle(
-                              color: fundo,
-                              fontSize: 10,
-                            ),
+                            style: TextStyle(color: fundo, fontSize: 10),
                           ),
 
                           const SizedBox(height: 15),
@@ -348,9 +319,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onFieldSubmitted: (_) => _criarConta(),
                             validator: (valor) =>
                                 Validators.validarConfirmacaoSenha(
-                              valor,
-                              _senhaController.text,
-                            ),
+                                  valor,
+                                  _senhaController.text,
+                                ),
                             decoration: _decoracaoCampo(
                               dica: 'Digite a senha novamente',
                               icone: Icons.lock_outline,
@@ -360,8 +331,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     : 'Mostrar senha',
                                 onPressed: () {
                                   setState(() {
-                                    _mostrarConfirmacao =
-                                        !_mostrarConfirmacao;
+                                    _mostrarConfirmacao = !_mostrarConfirmacao;
                                   });
                                 },
                                 icon: Icon(
@@ -381,24 +351,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           SizedBox(
                             height: 44,
                             child: ElevatedButton(
-                              onPressed:
-                                  _carregando ? null : _criarConta,
+                              onPressed: _carregando ? null : _criarConta,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: verde,
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: verde,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                               child: _carregando
                                   ? const SizedBox(
                                       width: 20,
                                       height: 20,
-                                      child:
-                                          CircularProgressIndicator(
+                                      child: CircularProgressIndicator(
                                         strokeWidth: 2,
                                         color: Colors.white,
                                       ),
@@ -428,17 +395,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: fundo,
-                              side: const BorderSide(
-                                color: verde,
-                                width: 1.2,
-                              ),
-                              minimumSize: const Size(
-                                double.infinity,
-                                44,
-                              ),
+                              side: const BorderSide(color: verde, width: 1.2),
+                              minimumSize: const Size(double.infinity, 44),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                             ),
                             child: const Text(

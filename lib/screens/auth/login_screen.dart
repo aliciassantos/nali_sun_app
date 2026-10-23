@@ -1,6 +1,8 @@
 // Login
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../app/routes.dart';
+import '../../providers/auth_provider.dart';
 import '../../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -39,21 +41,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _carregando = true);
+
     try {
-      // Neste ponto, conectaremos o AuthService ao banco
-      // de usuários e validaremos as credenciais cadastradas.
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final auth = context.read<AuthProvider>();
+
+      final sucesso = await auth.login(
+        _emailController.text.trim(),
+        _senhaController.text,
+      );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Campos válidos. Conecte o serviço de autenticação '
-            'para verificar suas credenciais.',
+      if (sucesso) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.errorMessage ?? 'E-mail ou senha incorretos.'),
           ),
-        ),
-      );
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -64,6 +75,91 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _carregando = false);
       }
+    }
+  }
+
+  Future<void> _esqueciMinhaSenha() async {
+    final emailController = TextEditingController();
+    final novaSenhaController = TextEditingController();
+
+    final dados = await showDialog<List<String>>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Recuperar senha'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'E-mail cadastrado',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: novaSenhaController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Nova senha'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final email = emailController.text.trim();
+                final senha = novaSenhaController.text;
+
+                if (email.isEmpty || senha.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Preencha o e-mail e a nova senha.'),
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext, [email, senha]);
+              },
+              child: const Text('Alterar senha'),
+            ),
+          ],
+        );
+      },
+    );
+
+    emailController.dispose();
+    novaSenhaController.dispose();
+
+    if (dados == null || !mounted) return;
+
+    try {
+      final auth = context.read<AuthProvider>();
+
+      final sucesso = await auth.resetPassword(dados[0], dados[1]);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            sucesso
+                ? 'Senha alterada. Você já pode entrar.'
+                : auth.errorMessage ?? 'Não foi possível alterar a senha.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao recuperar a senha.')),
+      );
     }
   }
 
@@ -252,17 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'A recuperação de senha '
-                                          'será conectada ao serviço '
-                                          'de autenticação.',
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  onPressed: _esqueciMinhaSenha,
                                   style: TextButton.styleFrom(
                                     foregroundColor: verde,
                                     padding: EdgeInsets.zero,
