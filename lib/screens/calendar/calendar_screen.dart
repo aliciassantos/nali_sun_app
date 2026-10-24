@@ -1,4 +1,5 @@
 // Aba 3: Agenda e Tarefas
+
 import 'package:flutter/material.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -9,7 +10,7 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  // Paleta de Cores do Nali-Sun
+  // Paleta original Nali-Sun
   static const Color fundoBege = Color(0xFFFBE4AE);
   static const Color verdeEscuro = Color(0xFF0B3740);
   static const Color verdeBase = Color(0xFF81B380);
@@ -18,39 +19,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
   static const Color textoCardEscuro = Color(0xFF392E0E);
   static const Color textoDetalhe = Color(0xFF897632);
 
-  // Dia selecionado no calendário
   int _diaSelecionado = 26;
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final escuro = tema.brightness == Brightness.dark;
+    final fundo = tema.scaffoldBackgroundColor;
+    final texto = tema.colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: fundoBege,
+      backgroundColor: fundo,
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER FLUIDO
-            _buildHeader(),
+            _buildHeader(escuro),
 
-            // CONTEÚDO ROLÁVEL (CALENDÁRIO + TAREFAS)
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // NAVEGADOR DE MÊS
-                    _buildSeletorMes(),
-
+                    _buildSeletorMes(escuro),
                     const SizedBox(height: 12),
-
-                    // CARD DO CALENDÁRIO COMPLETO
-                    _buildCardCalendario(),
-
+                    _buildCardCalendario(escuro),
                     const SizedBox(height: 20),
-
-                    // LISTA DE TAREFAS DO DIA
-                    _buildSecaoTarefasDoDia(),
+                    _buildSecaoTarefasDoDia(escuro, texto),
                   ],
                 ),
               ),
@@ -61,30 +60,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  // ==================== COMPONENTES DO LAYOUT ====================
+  // ==================== CABEÇALHO ====================
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool escuro) {
+    final corFundo =
+        escuro ? const Color(0xFF102A2E) : verdeEscuro;
+    final corTexto = escuro ? Colors.white : fundoBege;
+
     return Container(
       width: double.infinity,
-      color: verdeEscuro,
-      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 16),
+      color: corFundo,
+      padding: const EdgeInsets.only(
+        top: 20,
+        left: 20,
+        right: 20,
+        bottom: 16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Text(
             'Tarefas do Dia',
             style: TextStyle(
-              color: fundoBege,
+              color: corTexto,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: 2),
+          const SizedBox(height: 2),
           Text(
             'Um pouco de atenção, todos os dias.',
             style: TextStyle(
-              color: fundoBege,
+              color: corTexto,
               fontSize: 12,
               fontWeight: FontWeight.w400,
             ),
@@ -94,14 +101,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildSeletorMes() {
+  // ==================== SELETOR DE MÊS ====================
+
+  Widget _buildSeletorMes(bool escuro) {
+    final corTexto = escuro ? Colors.white : verdeEscuro;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 8,
+      ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [fundoBege, amareloCard],
+          colors: escuro
+              ? const [
+                  Color(0xFF29483F),
+                  Color(0xFF203A36),
+                ]
+              : const [
+                  fundoBege,
+                  amareloCard,
+                ],
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
@@ -118,15 +140,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            icon: const Icon(Icons.chevron_left, color: verdeEscuro, size: 22),
+            icon: Icon(
+              Icons.chevron_left,
+              color: corTexto,
+              size: 22,
+            ),
             onPressed: () {},
           ),
           Column(
-            children: const [
+            children: [
               Text(
                 'Outubro 2026',
                 style: TextStyle(
-                  color: verdeEscuro,
+                  color: corTexto,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -134,9 +160,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Text(
                 '31 dias · começa quinta-feira',
                 style: TextStyle(
-                  color: verdeEscuro,
+                  color: corTexto.withValues(alpha: 0.8),
                   fontSize: 10,
-                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -144,7 +169,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            icon: const Icon(Icons.chevron_right, color: verdeEscuro, size: 22),
+            icon: Icon(
+              Icons.chevron_right,
+              color: corTexto,
+              size: 22,
+            ),
             onPressed: () {},
           ),
         ],
@@ -152,25 +181,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCardCalendario() {
-    final List<String> diasDaSemana = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+  // ==================== CALENDÁRIO ====================
 
-    // Mapeamento de dias que possuem eventos (rega ou adubação)
-    final Map<int, List<Color>> eventosDias = {
-      2: [verdeEscuro],
-      7: [verdeEscuro],
-      13: [verdeEscuro],
-      15: [verdeEscuro],
-      20: [verdeEscuro],
-      23: [verdeEscuro, verdeEscuro],
-      26: [fundoBege, fundoBege], // Dia selecionado
-      28: [verdeEscuro],
+  Widget _buildCardCalendario(bool escuro) {
+    const diasDaSemana = [
+      'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM',
+    ];
+
+    final corCartao =
+        escuro ? const Color(0xFF1B383C) : verdeBase;
+    final corCelula =
+        escuro ? const Color(0xFF294448) : fundoBege;
+    final corTexto =
+        escuro ? Colors.white : verdeEscuro;
+    final corEvento =
+        escuro ? const Color(0xFFA7D8A5) : verdeEscuro;
+    final corSelecionado =
+        escuro ? const Color(0xFF81B380) : verdeAcao;
+    final corTextoSelecionado =
+        escuro ? const Color(0xFF102A2E) : fundoBege;
+
+    final Map<int, int> eventosDias = {
+      2: 1,
+      7: 1,
+      13: 1,
+      15: 1,
+      20: 1,
+      23: 2,
+      28: 1,
     };
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: verdeBase,
+        color: corCartao,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -182,32 +226,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
       child: Column(
         children: [
-          // CABEÇALHO DOS DIAS DA SEMANA
           Row(
-            children: diasDaSemana
-                .map(
-                  (dia) => Expanded(
-                    child: Text(
-                      dia,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: textoCardEscuro,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+            children: diasDaSemana.map((dia) {
+              return Expanded(
+                child: Text(
+                  dia,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: corTexto,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
-                )
-                .toList(),
+                ),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 8),
 
-          // GRID DOS DIAS DO MÊS (Outubro 2026 começa na Quinta-feira -> 3 células vazias)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: 31 + 3, // 3 offset inicial + 31 dias
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            itemCount: 34,
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               crossAxisSpacing: 4,
               mainAxisSpacing: 4,
@@ -215,53 +256,68 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             itemBuilder: (context, index) {
               if (index < 3) {
-                return const SizedBox.shrink(); // Células vazias do início do mês
+                return const SizedBox.shrink();
               }
 
-              final int dia = index - 2;
-              final bool selecionado = dia == _diaSelecionado;
-              final List<Color>? pontosEvento = eventosDias[dia];
+              final dia = index - 2;
+              final selecionado = dia == _diaSelecionado;
+              final quantidadeEventos = eventosDias[dia] ?? 0;
 
               return GestureDetector(
-                onTap: () => setState(() => _diaSelecionado = dia),
+                onTap: () => setState(() {
+                  _diaSelecionado = dia;
+                }),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: selecionado ? verdeAcao : fundoBege,
+                    color: selecionado
+                        ? corSelecionado
+                        : corCelula,
                     borderRadius: BorderRadius.circular(10),
+                    border: selecionado
+                        ? Border.all(
+                            color: escuro
+                                ? verdeBase
+                                : verdeEscuro,
+                            width: 1.2,
+                          )
+                        : null,
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Número do Dia
                       Text(
                         '$dia',
                         style: TextStyle(
-                          color: selecionado ? fundoBege : verdeEscuro,
+                          color: selecionado
+                              ? corTextoSelecionado
+                              : corTexto,
                           fontSize: 13,
-                          fontWeight: selecionado ? FontWeight.bold : FontWeight.w400,
+                          fontWeight: selecionado
+                              ? FontWeight.bold
+                              : FontWeight.w400,
                         ),
                       ),
-
-                      // Indicadores de Eventos (Pontinhos de Rega/Adubação)
-                      if (pontosEvento != null)
+                      if (quantidadeEventos > 0)
                         Positioned(
-                          top: 4,
-                          right: 4,
+                          bottom: 3,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: pontosEvento
-                                .map(
-                                  (cor) => Container(
-                                    margin: const EdgeInsets.only(left: 1),
-                                    width: 5,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: cor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                            children: List.generate(
+                              quantidadeEventos,
+                              (_) => Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 1,
+                                ),
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: selecionado
+                                      ? corTextoSelecionado
+                                      : corEvento,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                     ],
@@ -273,12 +329,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           const SizedBox(height: 10),
 
-          // LEGENDA
           Row(
             children: [
-              _buildItemLegenda('Rega', verdeEscuro),
+              _buildItemLegenda('Rega', corEvento, corTexto),
               const SizedBox(width: 16),
-              _buildItemLegenda('Adubação', verdeEscuro),
+              _buildItemLegenda(
+                'Adubação',
+                escuro ? amareloCard : verdeEscuro,
+                corTexto,
+              ),
             ],
           ),
         ],
@@ -286,7 +345,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildItemLegenda(String rotulo, Color cor) {
+  Widget _buildItemLegenda(
+    String rotulo,
+    Color cor,
+    Color corTexto,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -301,8 +364,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         const SizedBox(width: 4),
         Text(
           rotulo,
-          style: const TextStyle(
-            color: textoDetalhe,
+          style: TextStyle(
+            color: corTexto,
             fontSize: 10,
             fontWeight: FontWeight.w400,
           ),
@@ -311,32 +374,44 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildSecaoTarefasDoDia() {
+  // ==================== TAREFAS DO DIA ====================
+
+  Widget _buildSecaoTarefasDoDia(
+    bool escuro,
+    Color corTexto,
+  ) {
+    final corEtiqueta =
+        escuro ? const Color(0xFF29483F) : verdeBase;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // CABEÇALHO DO DIA SELECIONADO
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Segunda, $_diaSelecionado outubro',
-              style: const TextStyle(
-                color: verdeEscuro,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                'Segunda, $_diaSelecionado outubro',
+                style: TextStyle(
+                  color: corTexto,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
               decoration: BoxDecoration(
-                color: verdeBase,
+                color: corEtiqueta,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
+              child: Text(
                 '2 tarefas',
                 style: TextStyle(
-                  color: verdeEscuro,
+                  color: escuro ? Colors.white : verdeEscuro,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -347,36 +422,41 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
         const SizedBox(height: 10),
 
-        // ITEM DE TAREFA 1
         _buildItemTarefa(
           titulo: 'Regar Jiboia',
           horarioSubtitulo: '18:00 · rega semanal',
           icone: Icons.water_drop_outlined,
           concluida: false,
+          escuro: escuro,
         ),
 
         const SizedBox(height: 8),
 
-        // ITEM DE TAREFA 2
         _buildItemTarefa(
           titulo: 'Adubar Monstera',
           horarioSubtitulo: '09:00 · adubação mensal',
           icone: Icons.eco_outlined,
           concluida: true,
+          escuro: escuro,
         ),
 
         const SizedBox(height: 16),
 
-        // MENSAGEM DE CUIDADO CONCLUÍDO
         Row(
-          children: const [
-            Icon(Icons.check_circle_outline, color: textoDetalhe, size: 18),
-            SizedBox(width: 8),
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              color: escuro ? verdeBase : textoDetalhe,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 '1 cuidado concluído. Seu jardim agradece!',
                 style: TextStyle(
-                  color: textoDetalhe,
+                  color: escuro
+                      ? const Color(0xFFB8CCC5)
+                      : textoDetalhe,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                 ),
@@ -388,29 +468,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
+  // ==================== ITEM DE TAREFA ====================
+
   Widget _buildItemTarefa({
     required String titulo,
     required String horarioSubtitulo,
     required IconData icone,
     required bool concluida,
+    required bool escuro,
   }) {
+    final corFundo =
+        escuro ? const Color(0xFF1B383C) : fundoBege;
+    final corTexto =
+        escuro ? Colors.white : verdeEscuro;
+    final corDetalhe =
+        escuro ? const Color(0xFFB8CCC5) : textoDetalhe;
+    final corIcone =
+        escuro ? verdeBase : verdeEscuro;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: fundoBege,
+        color: corFundo,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: verdeBase.withValues(alpha: 0.5),
+          color: verdeBase.withValues(alpha: escuro ? 0.6 : 0.5),
           width: 1,
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            icone,
-            color: verdeEscuro,
-            size: 20,
-          ),
+          Icon(icone, color: corIcone, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -419,17 +507,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Text(
                   titulo,
                   style: TextStyle(
-                    color: verdeEscuro,
+                    color: corTexto,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    decoration: concluida ? TextDecoration.lineThrough : null,
+                    decoration: concluida
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   horarioSubtitulo,
-                  style: const TextStyle(
-                    color: textoDetalhe,
+                  style: TextStyle(
+                    color: corDetalhe,
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
                   ),
@@ -438,8 +528,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           Icon(
-            concluida ? Icons.check_box : Icons.check_box_outline_blank,
-            color: concluida ? verdeAcao : verdeEscuro,
+            concluida
+                ? Icons.check_box
+                : Icons.check_box_outline_blank,
+            color: concluida ? verdeBase : corIcone,
             size: 22,
           ),
         ],

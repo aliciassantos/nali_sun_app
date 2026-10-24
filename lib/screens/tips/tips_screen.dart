@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class TipsScreen extends StatefulWidget {
@@ -8,7 +9,7 @@ class TipsScreen extends StatefulWidget {
 }
 
 class _TipsScreenState extends State<TipsScreen> {
-  // Paleta de Cores do Nali-Sun
+  // Paleta de cores do Nali-Sun
   static const Color fundoBege = Color(0xFFFBE4AE);
   static const Color verdeEscuro = Color(0xFF0B3740);
   static const Color verdeAcao = Color(0xFF258A60);
@@ -16,19 +17,24 @@ class _TipsScreenState extends State<TipsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final escuro = tema.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: fundoBege,
+      backgroundColor: tema.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER FLUIDO
-            _buildHeader(),
+            _buildHeader(escuro),
 
-            // LISTA DE DICAS ROLÁVEL
+            // Lista de dicas rolável
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -36,26 +42,34 @@ class _TipsScreenState extends State<TipsScreen> {
                       categoria: 'SUBSTRATO',
                       tempoLeitura: '5 min de leitura',
                       corBadge: verdeAcao,
-                      titulo: 'O segredo está embaixo: substrato ideal para cada planta',
-                      subtitulo: 'Mistura certa de terra, areia e perlita faz toda a diferença no crescimento.',
+                      titulo:
+                          'O segredo está embaixo: substrato ideal para cada planta',
+                      subtitulo:
+                          'Mistura certa de terra, areia e perlita faz toda a diferença no crescimento.',
                       imagemUrl: 'assets/img/plantinha1.jpg',
                     ),
                     const SizedBox(height: 16),
+
                     _buildCardDica(
                       categoria: 'PODA',
                       tempoLeitura: '8 min de leitura',
                       corBadge: textoCardEscuro,
-                      titulo: 'Poda consciente: quando e como cortar sem estressar a planta',
-                      subtitulo: 'Tesoura limpa, corte certeiro. A planta agradece com folhas novas.',
+                      titulo:
+                          'Poda consciente: quando e como cortar sem estressar a planta',
+                      subtitulo:
+                          'Tesoura limpa, corte certeiro. A planta agradece com folhas novas.',
                       imagemUrl: 'assets/img/plantinha1.jpg',
                     ),
                     const SizedBox(height: 16),
+
                     _buildCardDica(
                       categoria: 'ILUMINAÇÃO',
                       tempoLeitura: '4 min de leitura',
                       corBadge: verdeAcao,
-                      titulo: 'Luz direta vs. Indireta: como identificar o local perfeito em casa',
-                      subtitulo: 'Entenda os sinais das folhas e posicione suas plantas no lugar certo.',
+                      titulo:
+                          'Luz direta vs. indireta: como identificar o local perfeito em casa',
+                      subtitulo:
+                          'Entenda os sinais das folhas e posicione suas plantas no lugar certo.',
                       imagemUrl: 'assets/img/plantinha1.jpg',
                     ),
                   ],
@@ -68,17 +82,22 @@ class _TipsScreenState extends State<TipsScreen> {
     );
   }
 
-  // ==================== COMPONENTES DO LAYOUT ====================
+  // ==================== CABEÇALHO ====================
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool escuro) {
     return Container(
       width: double.infinity,
-      color: verdeEscuro,
-      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 16),
-      child: Column(
+      color: escuro ? const Color(0xFF102A2E) : verdeEscuro,
+      padding: const EdgeInsets.only(
+        top: 20,
+        left: 20,
+        right: 20,
+        bottom: 16,
+      ),
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Text(
             'Dicas para Florescer',
             style: TextStyle(
@@ -102,6 +121,8 @@ class _TipsScreenState extends State<TipsScreen> {
     );
   }
 
+  // ==================== CARDS DE DICAS ====================
+
   Widget _buildCardDica({
     required String categoria,
     required String tempoLeitura,
@@ -110,16 +131,25 @@ class _TipsScreenState extends State<TipsScreen> {
     required String subtitulo,
     required String imagemUrl,
   }) {
+    final escuro =
+        Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 190,
       width: double.infinity,
       decoration: BoxDecoration(
+        color: escuro ? const Color(0xFF1B383C) : verdeEscuro,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
+        border: escuro
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.07),
+              )
+            : null,
+        boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black.withValues(alpha: escuro ? 0.16 : 0.08),
             blurRadius: 6,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -127,19 +157,29 @@ class _TipsScreenState extends State<TipsScreen> {
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // IMAGEM DE FUNDO
+            // Imagem de fundo.
+            // Como o caminho é local, utilizamos Image.asset.
             Positioned.fill(
-              child: Image.network(
+              child: Image.asset(
                 imagemUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: verdeEscuro,
-                  child: const Icon(Icons.menu_book, color: fundoBege, size: 48),
-                ),
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: escuro
+                        ? const Color(0xFF294448)
+                        : verdeEscuro,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.menu_book,
+                      color: fundoBege,
+                      size: 48,
+                    ),
+                  );
+                },
               ),
             ),
 
-            // OVERLAY DE GRADIENTE ESCURO PARA LEITURA DO TEXTO
+            // Gradiente para facilitar a leitura.
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -147,24 +187,32 @@ class _TipsScreenState extends State<TipsScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.15),
-                      verdeEscuro.withValues(alpha: 0.85),
+                      Colors.black.withValues(
+                        alpha: escuro ? 0.25 : 0.15,
+                      ),
+                      (escuro
+                              ? const Color(0xFF102A2E)
+                              : verdeEscuro)
+                          .withValues(alpha: 0.92),
                     ],
                   ),
                 ),
               ),
             ),
 
-            // CONTEÚDO DO CARD
+            // Conteúdo do card.
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // BADGE CATEGORIA + TEMPO DE LEITURA
+                  // Categoria e tempo de leitura.
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: corBadge,
                       borderRadius: BorderRadius.circular(4),
@@ -182,7 +230,9 @@ class _TipsScreenState extends State<TipsScreen> {
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                          ),
                           width: 1,
                           height: 10,
                           color: fundoBege,
@@ -201,7 +251,7 @@ class _TipsScreenState extends State<TipsScreen> {
 
                   const SizedBox(height: 8),
 
-                  // TÍTULO DA DICA
+                  // Título da dica.
                   Text(
                     titulo,
                     maxLines: 2,
@@ -216,7 +266,7 @@ class _TipsScreenState extends State<TipsScreen> {
 
                   const SizedBox(height: 4),
 
-                  // SUBTÍTULO
+                  // Resumo da dica.
                   Text(
                     subtitulo,
                     maxLines: 2,

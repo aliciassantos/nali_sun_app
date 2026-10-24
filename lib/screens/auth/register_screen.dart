@@ -59,32 +59,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return InputDecoration(
       hintText: dica,
-      hintStyle: const TextStyle(color: Color(0x990B3740), fontSize: 12),
-      prefixIcon: Icon(icone, size: 19, color: fundo),
+      hintStyle: const TextStyle(
+        color: Color(0x990B3740),
+        fontSize: 12,
+      ),
+      prefixIcon: Icon(
+        icone,
+        size: 19,
+        color: fundo,
+      ),
       suffixIcon: sufixo,
       filled: true,
       fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 13,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: borda, width: 1.2),
+        borderSide: const BorderSide(
+          color: borda,
+          width: 1.2,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: borda, width: 1.2),
+        borderSide: const BorderSide(
+          color: borda,
+          width: 1.2,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: verde, width: 1.8),
+        borderSide: const BorderSide(
+          color: verde,
+          width: 1.8,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Colors.red),
+        borderSide: const BorderSide(
+          color: Colors.red,
+        ),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -123,16 +147,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (sucesso) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Conta criada com sucesso! Faça seu login.'),
+            content: Text(
+              'Conta criada com sucesso! Faça seu login.',
+            ),
           ),
         );
 
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+          (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              auth.errorMessage ?? 'Não foi possível criar sua conta.',
+              auth.errorMessage ??
+                  'Não foi possível criar sua conta.',
             ),
           ),
         );
@@ -141,7 +172,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ocorreu um erro ao criar sua conta.')),
+        const SnackBar(
+          content: Text(
+            'Ocorreu um erro ao criar sua conta.',
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -157,7 +192,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 20,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 360),
               child: Column(
@@ -226,7 +264,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const Text(
                             'Comece a cuidar do seu jardim!',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: fundo, fontSize: 12),
+                            style: TextStyle(
+                              color: fundo,
+                              fontSize: 12,
+                            ),
                           ),
 
                           const SizedBox(height: 22),
@@ -237,6 +278,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _nomeController,
+                            style: const TextStyle(
+                              color: fundo,
+                              fontSize: 14,
+                            ),
                             textCapitalization: TextCapitalization.words,
                             textInputAction: TextInputAction.next,
                             validator: _validarNome,
@@ -254,6 +299,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _emailController,
+                            style: const TextStyle(
+                              color: fundo,
+                              fontSize: 14,
+                            ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             autocorrect: false,
@@ -272,6 +321,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _senhaController,
+                            style: const TextStyle(
+                              color: fundo,
+                              fontSize: 14,
+                            ),
                             obscureText: !_mostrarSenha,
                             textInputAction: TextInputAction.next,
                             validator: Validators.validarSenhaCadastro,
@@ -303,7 +356,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const Text(
                             'Use pelo menos 8 caracteres, '
                             'com maiúscula, minúscula e número.',
-                            style: TextStyle(color: fundo, fontSize: 10),
+                            style: TextStyle(
+                              color: fundo,
+                              fontSize: 10,
+                            ),
                           ),
 
                           const SizedBox(height: 15),
@@ -314,6 +370,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           TextFormField(
                             controller: _confirmarSenhaController,
+                            style: const TextStyle(
+                              color: fundo,
+                              fontSize: 14,
+                            ),
                             obscureText: !_mostrarConfirmacao,
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _criarConta(),
@@ -331,7 +391,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     : 'Mostrar senha',
                                 onPressed: () {
                                   setState(() {
-                                    _mostrarConfirmacao = !_mostrarConfirmacao;
+                                    _mostrarConfirmacao =
+                                        !_mostrarConfirmacao;
                                   });
                                 },
                                 icon: Icon(
@@ -351,7 +412,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           SizedBox(
                             height: 44,
                             child: ElevatedButton(
-                              onPressed: _carregando ? null : _criarConta,
+                              onPressed:
+                                  _carregando ? null : _criarConta,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: verde,
                                 foregroundColor: Colors.white,
@@ -395,8 +457,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: fundo,
-                              side: const BorderSide(color: verde, width: 1.2),
-                              minimumSize: const Size(double.infinity, 44),
+                              side: const BorderSide(
+                                color: verde,
+                                width: 1.2,
+                              ),
+                              minimumSize: const Size(
+                                double.infinity,
+                                44,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),

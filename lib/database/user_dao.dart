@@ -1,4 +1,3 @@
-
 import 'package:sqflite/sqflite.dart';
 
 import '../models/user_model.dart';
@@ -17,9 +16,7 @@ class UserDAO {
     );
   }
 
-  Future<UserModel?> getUserByEmail(
-    String email,
-  ) async {
+  Future<UserModel?> getUserByEmail(String email) async {
     final db = await _dbHelper.database;
 
     final results = await db.query(
@@ -36,10 +33,7 @@ class UserDAO {
     return UserModel.fromMap(results.first);
   }
 
-  Future<bool> updatePassword(
-    String email,
-    String newPassword,
-  ) async {
+  Future<bool> updatePassword(String email, String newPassword) async {
     final db = await _dbHelper.database;
 
     final rowsAffected = await db.update(
@@ -50,5 +44,20 @@ class UserDAO {
     );
 
     return rowsAffected > 0;
+  }
+
+  Future<UserModel?> getUserById(String id) async {
+    final db = await _dbHelper.database;
+
+    final results = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (results.isEmpty) return null;
+
+    return UserModel.fromMap(results.first);
   }
 }

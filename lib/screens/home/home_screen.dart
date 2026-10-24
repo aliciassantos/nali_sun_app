@@ -1,4 +1,8 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -8,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Cores da Paleta Nali-Sun
+  // Paleta original Nali-Sun
   static const Color fundoBege = Color(0xFFFBE4AE);
   static const Color verdeEscuro = Color(0xFF0B3740);
   static const Color verdeBase = Color(0xFF81B380);
@@ -21,65 +25,98 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final usuario = context.watch<AuthProvider>().currentUser;
+    final tema = Theme.of(context);
+    final escuro = tema.brightness == Brightness.dark;
+
+    final fundo = tema.scaffoldBackgroundColor;
+    final texto = tema.colorScheme.onSurface;
+    final destaque = escuro ? verdeBase : verdeAcao;
+
     return Scaffold(
-      backgroundColor: fundoBege,
+      backgroundColor: fundo,
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER FLUIDO (100% DA LARGURA)
-            _buildHeader(),
+            _buildHeader(
+              nomeUsuario: usuario?.name ?? 'Usuário',
+              escuro: escuro,
+            ),
 
-            // CORPO ROLÁVEL E ADAPTÁVEL
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // CARD PRINCIPAL COM GRADIENTE
-                    _buildProximaRegaCard(),
+                    _buildProximaRegaCard(escuro),
 
                     const SizedBox(height: 16),
 
-                    // GRID DE MINI CARDS COM GRADIENTES INDIVIDUAIS
-                    _buildGridAcoes(),
+                    _buildGridAcoes(escuro),
 
                     const SizedBox(height: 24),
 
-                    // SEÇÃO 1: PRECISA DE ATENÇÃO
-                    _buildTituloSecao('Precisa de Atenção', '1 planta', verdeAcao),
+                    _buildTituloSecao(
+                      'Precisa de Atenção',
+                      '1 planta',
+                      destaque,
+                      texto,
+                    ),
+
                     const SizedBox(height: 10),
+
                     _buildAvisoCard(
                       titulo: 'Regar Suculenta',
                       subtitulo: 'Atrasada · 2 dias',
-                      corFundo: verdeAvisoCard,
+                      corFundo: escuro
+                          ? const Color(0xFF493334)
+                          : verdeAvisoCard,
                       corBorda: const Color(0xFFE53935),
                       icone: Icons.warning_amber_rounded,
-                      corIcone: const Color(0xFFE53935),
+                      corIcone: const Color(0xFFFF6B6B),
+                      escuro: escuro,
                     ),
 
                     const SizedBox(height: 20),
 
-                    // SEÇÃO 2: REGAR HOJE
-                    _buildTituloSecao('Regar Hoje', 'Às 18h', verdeAcao),
+                    _buildTituloSecao(
+                      'Regar Hoje',
+                      'Às 18h',
+                      destaque,
+                      texto,
+                    ),
+
                     const SizedBox(height: 10),
+
                     _buildAvisoCard(
                       titulo: 'Regar Samambaia',
                       subtitulo: 'Hoje · 18hrs',
-                      corFundo: amareloCard,
+                      corFundo: escuro
+                          ? const Color(0xFF493F2C)
+                          : amareloCard,
                       corBorda: const Color(0xFFF59E0B),
                       icone: Icons.warning_amber_rounded,
-                      corIcone: const Color(0xFFF59E0B),
+                      corIcone: const Color(0xFFFFB74D),
+                      escuro: escuro,
                     ),
+
                     const SizedBox(height: 10),
+
                     _buildAvisoCard(
                       titulo: 'Tudo em Dia',
                       subtitulo: 'Monstera · próxima rega em 3 dias',
-                      corFundo: verdeBase,
-                      corBorda: verdeBase,
+                      corFundo: escuro
+                          ? const Color(0xFF24463D)
+                          : verdeBase,
+                      corBorda: escuro ? verdeBase : verdeBase,
                       icone: Icons.check_circle_outline,
-                      corIcone: verdeEscuro,
+                      corIcone: escuro ? verdeBase : verdeEscuro,
+                      escuro: escuro,
                     ),
                   ],
                 ),
@@ -91,13 +128,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==================== COMPONENTES DO LAYOUT ====================
+  // ==================== CABEÇALHO ====================
 
-  Widget _buildHeader() {
+  Widget _buildHeader({
+    required String nomeUsuario,
+    required bool escuro,
+  }) {
+    final fundoHeader = escuro
+        ? const Color(0xFF102A2E)
+        : verdeEscuro;
+
+    final textoHeader = escuro ? Colors.white : fundoBege;
+    final verdeIcone = escuro ? verdeBase : verdeBase;
+
     return Container(
       width: double.infinity,
-      color: verdeEscuro,
-      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 16),
+      color: fundoHeader,
+      padding: const EdgeInsets.only(
+        top: 20,
+        left: 20,
+        right: 20,
+        bottom: 16,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -107,24 +159,26 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  children: const [
+                  children: [
                     Text(
                       'Nali-Sun',
                       style: TextStyle(
-                        color: fundoBege,
+                        color: textoHeader,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.eco, color: verdeBase, size: 20),
+                    const SizedBox(width: 4),
+                    Icon(Icons.eco, color: verdeIcone, size: 20),
                   ],
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Bem-vinda, Alícia!',
+                Text(
+                  'Bem-vinda, $nomeUsuario!',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: fundoBege,
+                    color: textoHeader,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
@@ -132,7 +186,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // Botão Notificação
           Container(
             width: 44,
             height: 44,
@@ -140,35 +193,53 @@ class _HomeScreenState extends State<HomeScreen> {
               color: verdeBase,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_none, color: verdeEscuro, size: 22),
+            child: const Icon(
+              Icons.notifications_none,
+              color: verdeEscuro,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 10),
-          // Avatar
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: amareloCard,
+              color: escuro ? const Color(0xFF304B4E) : amareloCard,
               shape: BoxShape.circle,
               border: Border.all(color: verdeBase, width: 2),
             ),
-            child: const Icon(Icons.person, color: verdeEscuro, size: 24),
+            child: Icon(
+              Icons.person,
+              color: escuro ? Colors.white : verdeEscuro,
+              size: 24,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProximaRegaCard() {
+  // ==================== PRÓXIMA REGA ====================
+
+  Widget _buildProximaRegaCard(bool escuro) {
+    final corTexto = escuro ? Colors.white : verdeEscuro;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        // Gradiente exato do Figma: Color(0xFF5AA68C) -> Color(0xFF81B380)
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [verdeAvisoCard, verdeBase],
+          colors: escuro
+              ? const [
+                  Color(0xFF28594B),
+                  Color(0xFF1B4039),
+                ]
+              : const [
+                  verdeAvisoCard,
+                  verdeBase,
+                ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
@@ -184,38 +255,49 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
-                'Próxima Rega do Jardim',
-                style: TextStyle(
-                  color: verdeEscuro,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+            children: [
+              Expanded(
+                child: Text(
+                  'Próxima Rega do Jardim',
+                  style: TextStyle(
+                    color: corTexto,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              Icon(Icons.water_drop_outlined, color: verdeEscuro, size: 22),
+              Icon(
+                Icons.water_drop_outlined,
+                color: corTexto,
+                size: 22,
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Hoje, às 18h',
             style: TextStyle(
-              color: verdeEscuro,
+              color: corTexto,
               fontSize: 34,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
-              color: verdeChartreuse,
+              color: escuro
+                  ? const Color(0xFF426B58)
+                  : verdeChartreuse,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: const Text(
+            child: Text(
               '14 set 2026 · Jiboia e Samambaia',
               style: TextStyle(
-                color: verdeEscuro,
+                color: escuro ? Colors.white : verdeEscuro,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -226,7 +308,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGridAcoes() {
+  // ==================== ATALHOS ====================
+
+  Widget _buildGridAcoes(bool escuro) {
+    final gradientePlantas = escuro
+        ? const LinearGradient(
+            colors: [Color(0xFF29483E), Color(0xFF203C36)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [verdeChartreuse, verdeBase],
+          );
+
+    final gradienteCalendario = escuro
+        ? const LinearGradient(
+            colors: [Color(0xFF254A45), Color(0xFF1C3936)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [verdeBase, verdeAvisoCard],
+          );
+
+    final gradienteDicas = escuro
+        ? const LinearGradient(
+            colors: [Color(0xFF49452D), Color(0xFF353D2D)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [amareloCard, verdeChartreuse],
+          );
+
+    final gradientePerfil = escuro
+        ? const LinearGradient(
+            colors: [Color(0xFF344649), Color(0xFF263A3D)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [textoNavUnselected, fundoBege],
+          );
+
     return Column(
       children: [
         Row(
@@ -236,11 +360,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Minhas Plantas',
                 '4 plantas',
                 Icons.eco_outlined,
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [verdeChartreuse, verdeBase],
-                ),
+                gradientePlantas,
+                escuro,
               ),
             ),
             const SizedBox(width: 10),
@@ -249,11 +370,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Calendário de Cuidados',
                 '3 cuidados hoje',
                 Icons.calendar_today_outlined,
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [verdeBase, verdeAvisoCard],
-                ),
+                gradienteCalendario,
+                escuro,
               ),
             ),
           ],
@@ -266,11 +384,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Dicas de Cultivo',
                 '3 artigos novos',
                 Icons.menu_book_outlined,
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [amareloCard, verdeChartreuse],
-                ),
+                gradienteDicas,
+                escuro,
               ),
             ),
             const SizedBox(width: 10),
@@ -279,11 +394,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Meu perfil',
                 'Customize seu perfil',
                 Icons.person_outline,
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [textoNavUnselected, fundoBege],
-                ),
+                gradientePerfil,
+                escuro,
               ),
             ),
           ],
@@ -292,7 +404,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMiniCard(String titulo, String subtitulo, IconData icone, Gradient gradiente) {
+  Widget _buildMiniCard(
+    String titulo,
+    String subtitulo,
+    IconData icone,
+    Gradient gradiente,
+    bool escuro,
+  ) {
+    final corTexto = escuro ? Colors.white : verdeEscuro;
+
     return Container(
       height: 106,
       padding: const EdgeInsets.all(14),
@@ -311,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icone, color: verdeEscuro, size: 22),
+          Icon(icone, color: corTexto, size: 22),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -319,8 +439,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 titulo,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: verdeEscuro,
+                style: TextStyle(
+                  color: corTexto,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
@@ -329,8 +449,12 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitulo,
-                style: const TextStyle(
-                  color: verdeEscuro,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: escuro
+                      ? const Color(0xFFD4E1DC)
+                      : verdeEscuro,
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
                 ),
@@ -342,16 +466,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTituloSecao(String titulo, String acao, Color corAcao) {
+  // ==================== TÍTULOS DE SEÇÃO ====================
+
+  Widget _buildTituloSecao(
+    String titulo,
+    String acao,
+    Color corAcao,
+    Color corTexto,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            color: verdeEscuro,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        Expanded(
+          child: Text(
+            titulo,
+            style: TextStyle(
+              color: corTexto,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         Text(
@@ -366,6 +499,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ==================== AVISOS ====================
+
   Widget _buildAvisoCard({
     required String titulo,
     required String subtitulo,
@@ -373,7 +508,10 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color corBorda,
     required IconData icone,
     required Color corIcone,
+    required bool escuro,
   }) {
+    final corTexto = escuro ? Colors.white : textoCardEscuro;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -388,10 +526,13 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.local_florist, color: verdeEscuro),
+            child: Icon(
+              Icons.local_florist,
+              color: escuro ? verdeBase : verdeEscuro,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -400,8 +541,8 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   titulo,
-                  style: const TextStyle(
-                    color: textoCardEscuro,
+                  style: TextStyle(
+                    color: corTexto,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -409,8 +550,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitulo,
-                  style: const TextStyle(
-                    color: textoCardEscuro,
+                  style: TextStyle(
+                    color: corTexto,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),

@@ -1,6 +1,8 @@
 // Login
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../app/routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/validators.dart';
@@ -61,7 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(auth.errorMessage ?? 'E-mail ou senha incorretos.'),
+            content: Text(
+              auth.errorMessage ?? 'E-mail ou senha incorretos.',
+            ),
           ),
         );
       }
@@ -69,7 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível realizar o login.')),
+        const SnackBar(
+          content: Text('Não foi possível realizar o login.'),
+        ),
       );
     } finally {
       if (mounted) {
@@ -92,6 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               TextField(
                 controller: emailController,
+                style: const TextStyle(
+                  color: fundo,
+                  fontSize: 14,
+                ),
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: 'E-mail cadastrado',
@@ -100,8 +110,14 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: novaSenhaController,
+                style: const TextStyle(
+                  color: fundo,
+                  fontSize: 14,
+                ),
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Nova senha'),
+                decoration: const InputDecoration(
+                  labelText: 'Nova senha',
+                ),
               ),
             ],
           ),
@@ -118,7 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (email.isEmpty || senha.isEmpty) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(
-                      content: Text('Preencha o e-mail e a nova senha.'),
+                      content: Text(
+                        'Preencha o e-mail e a nova senha.',
+                      ),
                     ),
                   );
                   return;
@@ -150,7 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text(
             sucesso
                 ? 'Senha alterada. Você já pode entrar.'
-                : auth.errorMessage ?? 'Não foi possível alterar a senha.',
+                : auth.errorMessage ??
+                    'Não foi possível alterar a senha.',
           ),
         ),
       );
@@ -158,7 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao recuperar a senha.')),
+        const SnackBar(
+          content: Text('Erro ao recuperar a senha.'),
+        ),
       );
     }
   }
@@ -170,32 +191,57 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return InputDecoration(
       hintText: dica,
-      hintStyle: const TextStyle(color: Color(0x990B3740), fontSize: 12),
-      prefixIcon: Icon(icone, size: 19, color: fundo),
+      hintStyle: const TextStyle(
+        color: Color(0x990B3740),
+        fontSize: 12,
+      ),
+      prefixIcon: Icon(
+        icone,
+        size: 19,
+        color: fundo,
+      ),
       suffixIcon: sufixo,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
       isDense: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: borda, width: 1.2),
+        borderSide: const BorderSide(
+          color: borda,
+          width: 1.2,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: borda, width: 1.2),
+        borderSide: const BorderSide(
+          color: borda,
+          width: 1.2,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: verde, width: 1.8),
+        borderSide: const BorderSide(
+          color: verde,
+          width: 1.8,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Colors.red, width: 1.2),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.2,
+        ),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(
+          color: Colors.red,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -225,7 +271,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   vertical: 16,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
+                  constraints: const BoxConstraints(
+                    maxWidth: 360,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -279,7 +327,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Form(
                           key: _formKey,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.stretch,
                             children: [
                               const Text(
                                 'Login',
@@ -299,7 +348,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               TextFormField(
                                 controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(
+                                  color: fundo,
+                                  fontSize: 14,
+                                ),
+                                keyboardType:
+                                    TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
                                 autocorrect: false,
                                 validator: Validators.validarEmail,
@@ -316,10 +370,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               TextFormField(
                                 controller: _senhaController,
+                                style: const TextStyle(
+                                  color: fundo,
+                                  fontSize: 14,
+                                ),
                                 obscureText: !_mostrarSenha,
                                 textInputAction: TextInputAction.done,
                                 onFieldSubmitted: (_) => _entrar(),
-                                validator: Validators.validarSenhaLogin,
+                                validator:
+                                    Validators.validarSenhaLogin,
                                 decoration: _decoracaoCampo(
                                   dica: 'Digite sua senha',
                                   icone: Icons.lock_outline,
@@ -329,7 +388,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         : 'Mostrar senha',
                                     onPressed: () {
                                       setState(() {
-                                        _mostrarSenha = !_mostrarSenha;
+                                        _mostrarSenha =
+                                            !_mostrarSenha;
                                       });
                                     },
                                     icon: Icon(
@@ -372,22 +432,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               SizedBox(
                                 height: 41,
                                 child: ElevatedButton(
-                                  onPressed: _carregando ? null : _entrar,
+                                  onPressed:
+                                      _carregando ? null : _entrar,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: verde,
                                     foregroundColor: Colors.white,
                                     disabledBackgroundColor: verde,
-                                    disabledForegroundColor: Colors.white70,
+                                    disabledForegroundColor:
+                                        Colors.white70,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius:
+                                          BorderRadius.circular(14),
                                     ),
                                   ),
                                   child: _carregando
                                       ? const SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: CircularProgressIndicator(
+                                          child:
+                                              CircularProgressIndicator(
                                             strokeWidth: 2,
                                             color: Colors.white,
                                           ),
@@ -410,7 +474,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 height: 41,
                                 child: OutlinedButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(context, '/register');
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/register',
+                                    );
                                   },
                                   style: OutlinedButton.styleFrom(
                                     backgroundColor: Colors.white,
@@ -420,7 +487,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       width: 1.2,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius:
+                                          BorderRadius.circular(14),
                                     ),
                                   ),
                                   child: const Text(

@@ -1,34 +1,61 @@
 // Estado da autenticação do usuário
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../database/user_dao.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final UserDAO _userDAO = UserDAO();
 
   UserModel? _currentUser;
   bool _isLoading = false;
+  bool _sessionChecked = false;
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _currentUser != null;
+  bool get sessionChecked => _sessionChecked;
   String? get errorMessage => _errorMessage;
 
-  Future<bool> login(
-    String email,
-    String password,
-  ) async {
+  Future<void> restoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('logged_user_id');
+
+      if (userId != null) {
+        _currentUser = await _userDAO.getUserById(userId);
+
+        // Se o usuário não existir mais no banco, limpa a sessão.
+        if (_currentUser == null) {
+          await prefs.remove('logged_user_id');
+        }
+      }
+    } catch (_) {
+      _currentUser = null;
+    } finally {
+      _sessionChecked = true;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> login(String email, String password) async {
     _setLoading(true);
 
     try {
-      _currentUser = await _authService.login(
+      final user = await _authService.login(
         email: email,
         password: password,
       );
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_id', user.id);
+
+      _currentUser = user;
       _errorMessage = null;
       return true;
     } catch (e) {
@@ -47,12 +74,16 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      _currentUser = await _authService.register(
+      final user = await _authService.register(
         name: name,
         email: email,
         password: password,
       );
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_id', user.id);
+
+      _currentUser = user;
       _errorMessage = null;
       return true;
     } catch (e) {
@@ -85,7 +116,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('logged_user_id');
+
     _currentUser = null;
     _errorMessage = null;
     notifyListeners();
@@ -97,10 +131,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   String _mensagemErro(Object erro) {
-    return erro.toString().replaceFirst(
-      'Exception: ',
-      '',
-    );
+    return erro.toString().replaceFirst('Exception: ', '');
   }
 
   void _setLoading(bool value) {
