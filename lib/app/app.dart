@@ -1,7 +1,7 @@
 // MaterialApp, rotas e observadores
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../main.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../screens/auth/login_screen.dart';
@@ -33,6 +33,7 @@ class NaliSunApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: theme.themeMode,
       initialRoute: auth.isAuthenticated ? AppRoutes.home : AppRoutes.login,
+      navigatorKey: navigatorKey,
       onGenerateRoute: (settings) {
         final name = settings.name ?? AppRoutes.login;
         final builder = AppRoutes.routes[name];
@@ -41,7 +42,11 @@ class NaliSunApp extends StatelessWidget {
           return MaterialPageRoute<void>(builder: (_) => const LoginScreen());
         }
 
-        const rotasPublicas = {AppRoutes.login, AppRoutes.register};
+        const rotasPublicas = {
+          AppRoutes.login, 
+          AppRoutes.register, 
+          AppRoutes.resetPassword
+        };
 
         if (!rotasPublicas.contains(name) && !auth.isAuthenticated) {
           return MaterialPageRoute<void>(

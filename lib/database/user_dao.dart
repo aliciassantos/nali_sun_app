@@ -1,63 +1,61 @@
-import 'package:sqflite/sqflite.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
-import 'database_helper.dart';
+
+final supabase = Supabase.instance.client;
 
 class UserDAO {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<void> insertUser(UserModel user) async {
-    final db = await _dbHelper.database;
+  static Future<UserModel?> insertUser({
+    required String name,
+    required String email,
+    required String password
+  }) async {
 
-    await db.insert(
-      'users',
-      user.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.fail,
-    );
-  }
-
-  Future<UserModel?> getUserByEmail(String email) async {
-    final db = await _dbHelper.database;
-
-    final results = await db.query(
-      'users',
-      where: 'LOWER(email) = ?',
-      whereArgs: [email.trim().toLowerCase()],
-      limit: 1,
+    final response = await supabase.auth.signUp(
+      email: email, 
+      password: password
     );
 
-    if (results.isEmpty) {
-      return null;
+    final userId = response.user?.id;
+
+    if (userId != null) {
+      await supabase.from('users').insert({
+        'id' : userId,
+        'name': name,
+        'email' : email
+      }).select();
+
+      return UserModel(id: userId, name: name, email: email, createdAt: DateTime.now());
     }
-
-    return UserModel.fromMap(results.first);
+    return null;
   }
 
-  Future<bool> updatePassword(String email, String newPassword) async {
-    final db = await _dbHelper.database;
+  static Future<UserModel?> getUserByEmail(String email) async {
+    final response = await supabase
+    .from('users')
+    .select()
+    .eq('email', email.trim().toLowerCase())
+    .maybeSingle();
 
-    final rowsAffected = await db.update(
-      'users',
-      {'password': newPassword},
-      where: 'LOWER(email) = ?',
-      whereArgs: [email.trim().toLowerCase()],
-    );
-
-    return rowsAffected > 0;
+    if (response == null) return null;
+    return UserModel.fromMap(response);
   }
 
-  Future<UserModel?> getUserById(String id) async {
-    final db = await _dbHelper.database;
-
-    final results = await db.query(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
+  static Future<void> updatePassword(String newPassword) async {
+    await supabase.auth.updateUser(
+      UserAttributes(password: newPassword),
     );
+  }
 
-    if (results.isEmpty) return null;
+  static Future<UserModel?> getUserById(String id) async {
+    final response = await supabase
+    .from('users')
+    .select()
+    .eq('id', id)
+    .maybeSingle();
 
-    return UserModel.fromMap(results.first);
+    if (response == null) return null;
+
+    return UserModel.fromMap(response);
   }
 }

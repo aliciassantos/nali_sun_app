@@ -86,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _esqueciMinhaSenha() async {
     final emailController = TextEditingController();
-    final novaSenhaController = TextEditingController();
 
     final dados = await showDialog<List<String>>(
       context: context,
@@ -108,17 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: novaSenhaController,
-                style: const TextStyle(
-                  color: fundo,
-                  fontSize: 14,
-                ),
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Nova senha',
-                ),
-              ),
             ],
           ),
           actions: [
@@ -129,37 +117,32 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: () {
                 final email = emailController.text.trim();
-                final senha = novaSenhaController.text;
-
-                if (email.isEmpty || senha.isEmpty) {
+                if (email.isEmpty) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Preencha o e-mail e a nova senha.',
+                        'Preencha o e-mail.',
                       ),
                     ),
                   );
                   return;
                 }
 
-                Navigator.pop(dialogContext, [email, senha]);
+                Navigator.pop(dialogContext, [email]);
               },
-              child: const Text('Alterar senha'),
+              child: const Text('Enviar link'),
             ),
           ],
         );
       },
     );
 
-    emailController.dispose();
-    novaSenhaController.dispose();
-
     if (dados == null || !mounted) return;
 
     try {
       final auth = context.read<AuthProvider>();
 
-      final sucesso = await auth.resetPassword(dados[0], dados[1]);
+      final sucesso = await auth.resetPassword(dados[0]);
 
       if (!mounted) return;
 
@@ -167,9 +150,9 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(
           content: Text(
             sucesso
-                ? 'Senha alterada. Você já pode entrar.'
+                ? 'E-mail de recuperação enviado! Verifique sua caixa de entrada.'
                 : auth.errorMessage ??
-                    'Não foi possível alterar a senha.',
+                    'Não foi possível enviar o e-mail de recuperação.',
           ),
         ),
       );

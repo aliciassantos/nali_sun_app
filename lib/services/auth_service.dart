@@ -1,13 +1,8 @@
 // Gerenciamento da sessão do usuário
-
-import 'package:uuid/uuid.dart';
-
 import '../database/user_dao.dart';
 import '../models/user_model.dart';
 
 class AuthService {
-  final UserDAO _userDAO = UserDAO();
-
   Future<UserModel> register({
     required String name,
     required String email,
@@ -27,7 +22,7 @@ class AuthService {
     }
 
     final existente =
-        await _userDAO.getUserByEmail(emailLimpo);
+        await UserDAO.getUserByEmail(emailLimpo);
 
     if (existente != null) {
       throw Exception(
@@ -35,16 +30,14 @@ class AuthService {
       );
     }
 
-    final usuario = UserModel(
-      id: const Uuid().v4(),
-      name: nome,
-      email: emailLimpo,
-      password: password,
-      createdAt: DateTime.now(),
-    );
-
     try {
-      await _userDAO.insertUser(usuario);
+      final usuario = await UserDAO.insertUser(name: nome, email: emailLimpo, password: password);
+      if (usuario == null) {
+        throw Exception(
+          'Não foi possível realizar o cadastro.'
+        );  
+      }
+      return usuario;
     } on Exception {
       // A restrição UNIQUE do banco também protege
       // contra cadastros duplicados simultâneos.
@@ -53,8 +46,6 @@ class AuthService {
         'Verifique se o e-mail já existe.',
       );
     }
-
-    return usuario;
   }
 
   Future<UserModel> login({
@@ -63,52 +54,35 @@ class AuthService {
   }) async {
     final emailLimpo = email.trim().toLowerCase();
 
-    final usuario =
-        await _userDAO.getUserByEmail(emailLimpo);
-
-    if (usuario == null) {
-      throw Exception(
-        'E-mail não encontrado. Crie uma conta primeiro.',
-      );
+    final response = await supabase.auth.signInWithPassword(
+      email: emailLimpo,
+       password: password
+    );
+    
+    final userId = response.user?.id;
+    if (userId == null) {
+      throw Exception('Usuário não encontrado.');
     }
 
-    if (usuario.password != password) {
-      throw Exception(
-        'Senha incorreta. Verifique suas credenciais.',
-      );
+    final user = await UserDAO.getUserById(userId);
+    if (user == null) {
+      throw Exception('Usuário não encontrado.');
     }
-
-    return usuario;
+    return user;
   }
 
   Future<void> resetPassword({
     required String email,
-    required String newPassword,
   }) async {
     final emailLimpo = email.trim().toLowerCase();
 
-    final usuario =
-        await _userDAO.getUserByEmail(emailLimpo);
-
-    if (usuario == null) {
-      throw Exception(
-        'Nenhum usuário cadastrado com este e-mail.',
-      );
+    if (emailLimpo.isEmpty) {
+      throw Exception('Informe um e-mail válido.');
     }
-
-    if (newPassword.isEmpty) {
-      throw Exception('Informe uma nova senha.');
-    }
-
-    final sucesso = await _userDAO.updatePassword(
-      emailLimpo,
-      newPassword,
+    
+    await supabase.auth.resetPasswordForEmail(
+      emailLimpo, 
+      redirectTo: 'http://localhost:3000/#/reset-password'
     );
-
-    if (!sucesso) {
-      throw Exception(
-        'Não foi possível redefinir a senha.',
-      );
-    }
   }
 }
