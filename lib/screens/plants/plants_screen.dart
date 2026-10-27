@@ -1,6 +1,7 @@
 // Aba 2: Meu Jardim e Detalhes
 
 import 'package:flutter/material.dart';
+import '../../app/routes.dart';
 
 class MyGardenScreen extends StatefulWidget {
   const MyGardenScreen({super.key});
@@ -107,10 +108,9 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Funcionalidade de adicionar planta em breve.'),
-                  ),
+                 Navigator.push(
+                  context,
+                  AppRoutes.plant as Route<Object?>, 
                 );
               },
               child: const SizedBox(

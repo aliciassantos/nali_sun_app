@@ -1,5 +1,6 @@
 // Definição de rotas nomeadas
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -10,6 +11,7 @@ import '../screens/main_navigation_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/tips/tips_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/plants/add_plants_screen.dart';
 
 class AppRoutes {
   // Nomes das rotas
@@ -21,7 +23,7 @@ class AppRoutes {
   static const String calendar = '/calendar';
   static const String tips = '/tips';
   static const String profile = '/profile';
-
+  static const String plant = '/add-plant';
   // Mapa de rotas do aplicativo
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -33,6 +35,7 @@ class AppRoutes {
       calendar:(context) => const CalendarScreen(),
       tips:(context) => const TipsScreen(),
       profile:(context) => const ProfileScreen(),
+      plant:(context) => const AddPlantScreen()
     };
   }
 }
