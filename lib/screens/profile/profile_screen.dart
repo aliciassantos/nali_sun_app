@@ -1,7 +1,9 @@
 // profile_screen.dart
+// profile_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/routes.dart';
 import '../../providers/auth_provider.dart';
@@ -24,6 +26,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _aparenciaExpandida = false;
   bool _sobreEstufaExpandida = false;
+  bool _notificacoesExpandida = false;
+
+  bool _lembretesRega = true;
+  bool _dicasJardinagem = true;
+  bool _avisosCuidado = true;
+
+  bool _carregandoNotificacoes = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarNotificacoes();
+  }
+
+  // ==================== CARREGAR NOTIFICAÇÕES ====================
+
+  Future<void> _carregarNotificacoes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (!mounted) return;
+
+      setState(() {
+        _lembretesRega =
+            prefs.getBool('nalisun_lembretes_rega') ?? true;
+
+        _dicasJardinagem =
+            prefs.getBool('nalisun_dicas_ativas') ?? true;
+
+        _avisosCuidado =
+            prefs.getBool('nalisun_avisos_cuidado') ?? true;
+
+        _carregandoNotificacoes = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _carregandoNotificacoes = false;
+      });
+    }
+  }
+
+  // ==================== SALVAR NOTIFICAÇÕES ====================
+
+  Future<void> _salvarLembretesRega(bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('nalisun_lembretes_rega', valor);
+
+    if (!mounted) return;
+
+    setState(() {
+      _lembretesRega = valor;
+    });
+  }
+
+  Future<void> _salvarDicas(bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('nalisun_dicas_ativas', valor);
+
+    if (!mounted) return;
+
+    setState(() {
+      _dicasJardinagem = valor;
+    });
+  }
+
+  Future<void> _salvarAvisos(bool valor) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('nalisun_avisos_cuidado', valor);
+
+    if (!mounted) return;
+
+    setState(() {
+      _avisosCuidado = valor;
+    });
+  }
+
+  void _mostrarMensagem(String mensagem) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: verdeEscuro,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // ==================== TELA PRINCIPAL ====================
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Conta e preferências',
+                      'Minha conta',
                       style: TextStyle(
                         color: escuro ? cores.onSurface : verdeEscuro,
                         fontSize: 18,
@@ -242,9 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: escuro
-            ? const Color(0xFF25484A)
-            : cardOpcoesFundo,
+        color: escuro ? const Color(0xFF25484A) : cardOpcoesFundo,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
@@ -256,37 +347,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
+          // CONTA
           _buildItemOpcao(
             icone: Icons.person_outline,
             titulo: 'Conta',
             subtitulo: '$nome · $email',
             mostrarDivisor: true,
             escuro: escuro,
-            onTap: () {},
+            onTap: () {
+              _mostrarMensagem(
+                'Os dados da conta serão configurados posteriormente.',
+              );
+            },
           ),
-          _buildItemOpcao(
-            icone: Icons.tune,
-            titulo: 'Preferências',
-            subtitulo: 'Português · horários de cuidado',
-            mostrarDivisor: true,
-            escuro: escuro,
-            onTap: () {},
-          ),
-          _buildItemOpcao(
+
+          // NOTIFICAÇÕES
+          _buildItemExpansivel(
             icone: Icons.notifications_none,
             titulo: 'Notificações',
-            subtitulo: 'Lembretes de rega ativados',
-            mostrarDivisor: true,
+            subtitulo: _carregandoNotificacoes
+                ? 'Carregando configurações...'
+                : _lembretesRega
+                    ? 'Lembretes de rega ativados'
+                    : 'Lembretes de rega desativados',
+            expandido: _notificacoesExpandida,
             escuro: escuro,
-            onTap: () {},
+            onTap: () {
+              setState(() {
+                _notificacoesExpandida = !_notificacoesExpandida;
+              });
+            },
+            conteudo: _carregandoNotificacoes
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                : _buildConteudoNotificacoes(escuro: escuro),
           ),
+
+          // APARÊNCIA
           _buildItemAparencia(
             tema: tema,
             escuro: escuro,
           ),
+
+          // SOBRE O APLICATIVO
           _buildItemSobreEstufa(
             escuro: escuro,
           ),
+
+          // SAIR DA CONTA
           _buildItemOpcao(
             icone: Icons.logout,
             titulo: 'Sair da conta',
@@ -298,6 +410,170 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ==================== ITEM EXPANSÍVEL ====================
+
+  Widget _buildItemExpansivel({
+    required IconData icone,
+    required String titulo,
+    required String subtitulo,
+    required bool expandido,
+    required bool escuro,
+    required VoidCallback onTap,
+    required Widget conteudo,
+  }) {
+    final cores = Theme.of(context).colorScheme;
+    final corTexto = escuro ? cores.onSurface : verdeEscuro;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: verdeBase.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            leading: Icon(
+              icone,
+              color: corTexto,
+              size: 22,
+            ),
+            title: Text(
+              titulo,
+              style: TextStyle(
+                color: corTexto,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              subtitulo,
+              style: TextStyle(
+                color: escuro ? Colors.white70 : verdeEscuro,
+                fontSize: 12,
+              ),
+            ),
+            trailing: AnimatedRotation(
+              turns: expandido ? 0.25 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.chevron_right,
+                color: corTexto,
+                size: 22,
+              ),
+            ),
+            onTap: onTap,
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 250),
+            sizeCurve: Curves.easeInOut,
+            crossFadeState: expandido
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox(
+              width: double.infinity,
+              height: 0,
+            ),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: conteudo,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== CONTEÚDO DAS NOTIFICAÇÕES ====================
+
+  Widget _buildConteudoNotificacoes({required bool escuro}) {
+    final corTexto = escuro ? Colors.white : verdeEscuro;
+
+    return Column(
+      children: [
+        _buildInterruptor(
+          icone: Icons.water_drop_outlined,
+          titulo: 'Lembretes de rega',
+          subtitulo: 'Avisos para lembrar de regar as plantas.',
+          valor: _lembretesRega,
+          corTexto: corTexto,
+          onChanged: _salvarLembretesRega,
+        ),
+        _buildInterruptor(
+          icone: Icons.spa_outlined,
+          titulo: 'Dicas de jardinagem',
+          subtitulo: 'Preferência para dicas e recomendações.',
+          valor: _dicasJardinagem,
+          corTexto: corTexto,
+          onChanged: _salvarDicas,
+        ),
+        _buildInterruptor(
+          icone: Icons.notifications_active_outlined,
+          titulo: 'Avisos sobre cuidados',
+          subtitulo: 'Avisos relacionados às plantas.',
+          valor: _avisosCuidado,
+          corTexto: corTexto,
+          onChanged: _salvarAvisos,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Essas opções salvam suas preferências. '
+          'O envio de notificações reais ainda precisa ser implementado.',
+          style: TextStyle(
+            color: corTexto.withValues(alpha: 0.75),
+            fontSize: 11,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==================== INTERRUPTORES ====================
+
+  Widget _buildInterruptor({
+    required IconData icone,
+    required String titulo,
+    required String subtitulo,
+    required bool valor,
+    required Color corTexto,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      secondary: Icon(
+        icone,
+        color: corTexto,
+        size: 22,
+      ),
+      title: Text(
+        titulo,
+        style: TextStyle(
+          color: corTexto,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        subtitulo,
+        style: TextStyle(
+          color: corTexto.withValues(alpha: 0.75),
+          fontSize: 11,
+        ),
+      ),
+      value: valor,
+      activeThumbColor: verdeAvisoCard,
+      onChanged: onChanged,
     );
   }
 
@@ -465,7 +741,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ==================== LINHA DE OPÇÃO DE TEMA ====================
+  // ==================== OPÇÃO DE TEMA ====================
 
   Widget _buildOpcaoTema({
     required IconData icone,
@@ -475,11 +751,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onTap,
   }) {
     final corTexto = escuro ? Colors.white : verdeEscuro;
-
-    // Sol e lua acompanham a cor do texto do tema.
-    final corIcone = selecionado
-        ? (escuro ? fundoBege : verdeEscuro)
-        : (escuro ? fundoBege : verdeEscuro);
+    final corIcone = escuro ? fundoBege : verdeEscuro;
 
     return InkWell(
       onTap: onTap,
@@ -523,7 +795,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ==================== SOBRE MINHA ESTUFA EXPANSÍVEL ====================
+  // ==================== SOBRE MINHA ESTUFA ====================
 
   Widget _buildItemSobreEstufa({
     required bool escuro,
@@ -640,6 +912,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  // ==================== INFORMAÇÕES ====================
 
   Widget _linhaInformacao(
     String titulo,

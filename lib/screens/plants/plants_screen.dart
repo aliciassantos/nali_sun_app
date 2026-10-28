@@ -1,7 +1,7 @@
 // Aba 2: Meu Jardim e Detalhes
 
 import 'package:flutter/material.dart';
-import '../../app/routes.dart';
+import 'add_plants_screen.dart';
 
 class MyGardenScreen extends StatefulWidget {
   const MyGardenScreen({super.key});
@@ -101,16 +101,19 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
             ),
           ),
 
-          // Botão de adicionar planta
+          // Botão para adicionar uma nova planta
           Material(
             color: verdeAcao,
             shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
-                  AppRoutes.plant as Route<Object?>, 
+                  MaterialPageRoute(
+                    builder: (context) => const AddPlantScreen(),
+                  ),
                 );
               },
               child: const SizedBox(
@@ -220,8 +223,9 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
   }) {
     // No tema escuro, os cards também ficam escuros.
     // No tema claro, preservam as cores originais.
-    final corFundoCard =
-        escuro ? const Color(0xFF1B383C) : corCard;
+    final corFundoCard = escuro
+        ? const Color(0xFF1B383C)
+        : corCard;
 
     final corBadgeAtual = escuro
         ? const Color(0xFF31564C)
@@ -237,7 +241,9 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
         color: corFundoCard,
         borderRadius: BorderRadius.circular(16),
         border: escuro
-            ? Border.all(color: Colors.white.withValues(alpha: 0.07))
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.07),
+              )
             : null,
         boxShadow: [
           BoxShadow(
