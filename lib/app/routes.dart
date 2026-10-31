@@ -1,6 +1,5 @@
 // Definição de rotas nomeadas
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
