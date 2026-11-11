@@ -1,3 +1,4 @@
+
 // Tela contendo a BottomNavigationBar e IndexedStack
 // Navegação principal do footer
 
@@ -11,7 +12,6 @@ import 'package:nali_sun_app/screens/plants/plants_screen.dart';
 import 'package:nali_sun_app/screens/calendar/calendar_screen.dart';
 import 'package:nali_sun_app/screens/tips/tips_screen.dart';
 import 'package:nali_sun_app/screens/profile/profile_screen.dart';
-
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -29,6 +29,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final GlobalKey<HomeScreenState> _homeKey =
       GlobalKey<HomeScreenState>();
 
+  // Chave para acessar os métodos públicos do Calendário.
+  final GlobalKey<CalendarScreenState> _calendarKey =
+      GlobalKey<CalendarScreenState>();
+
   // Todas as telas do aplicativo.
   // A ordem deve ser mantida para corresponder aos índices.
   late final List<Widget> _telas = [
@@ -37,7 +41,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       onNavigateToTab: _selecionarAba,
     ),
     const MyGardenScreen(),
-    const CalendarScreen(),
+    CalendarScreen(key: _calendarKey),
     const TipsScreen(),
     const ProfileScreen(),
   ];
@@ -83,6 +87,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
         _homeKey.currentState?.atualizarPlantas();
       });
+    }
+
+    // Quando o usuário entra no Calendário,
+    // atualiza os dados e o histórico de regas.
+    if (index == 2) {
+      _calendarKey.currentState?.atualizarCalendario();
     }
   }
 

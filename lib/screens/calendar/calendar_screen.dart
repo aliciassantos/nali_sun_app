@@ -16,10 +16,10 @@ class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class CalendarScreenState extends State<CalendarScreen> {
   // ============================================================
   // PALETA DE CORES DO NALI-SUN
   // ============================================================
@@ -480,6 +480,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return '${_diasSemanaCompletos[data.weekday - 1]}, '
         '${data.day} de '
         '${_meses[data.month - 1].toLowerCase()}';
+  }
+
+  // Atualiza os dados quando o usuário retorna à aba Calendário.
+  Future<void> atualizarCalendario() async {
+    await _carregarDados();
   }
 
   // ============================================================
