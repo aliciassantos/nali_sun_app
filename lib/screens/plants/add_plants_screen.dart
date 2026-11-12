@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../../providers/plant_provider.dart';
 import 'package:nali_sun_app/database/plant_dao.dart';
 import 'package:nali_sun_app/services/kindwise_service.dart';
 
@@ -417,6 +419,10 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
       if (!mounted) return;
 
+      await context.read<PlantProvider>().carregarPlantas();
+
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

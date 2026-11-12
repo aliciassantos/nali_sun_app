@@ -329,6 +329,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
           escuro: escuro,
           texto: texto,
           textoSecundario: textoSecundario,
+          plantaCompleta: planta,
         );
       },
     );
@@ -348,6 +349,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
     required bool escuro,
     required Color texto,
     required Color textoSecundario,
+    required Map<String, dynamic> plantaCompleta,
   }) {
     final corFundoCard = escuro
         ? const Color(0xFF1B383C)
@@ -427,7 +429,7 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
                     _selecionarOpcao(
                       opcao: opcao,
                       id: id,
-                      nome: nome,
+                      planta: plantaCompleta,
                     );
                   },
                   itemBuilder: (context) => const [
@@ -554,22 +556,25 @@ class _MyGardenScreenState extends State<MyGardenScreen> {
 
   // ==================== OPÇÕES DO CARD ====================
 
-  void _selecionarOpcao({
+  // ==================== OPÇÕES DO CARD ====================
+
+  Future<void> _selecionarOpcao({
     required String opcao,
     required dynamic id,
-    required String nome,
-  }) {
+    required Map<String, dynamic> planta,
+  }) async {
     if (opcao == 'detalhes') {
       _abrirDetalhesPlanta(id.toString());
     } else if (opcao == 'editar') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'A edição de $nome ainda precisa ser implementada.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
+      final atualizou = await Navigator.pushNamed(
+        context,
+        AppRoutes.plant, // A rota para o AddPlantScreen
+        arguments: planta, // Passa o objeto completo da planta
       );
+
+      if (atualizou == true && mounted) {
+        context.read<PlantProvider>().carregarPlantas();
+      }
     }
   }
 }
