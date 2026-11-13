@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -8,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../providers/plant_provider.dart';
 import 'package:nali_sun_app/database/plant_dao.dart';
 import 'package:nali_sun_app/services/kindwise_service.dart';
+import 'package:nali_sun_app/utils/constants.dart';
 
 class AddPlantScreen extends StatefulWidget {
   final Map<String, dynamic>? plantToEdit;
@@ -25,23 +27,26 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   String? _fotoPath;
 
   // ==================== ESTADO DE EDIÇÃO ====================
+
   Map<String, dynamic>? _plantaParaEditar;
   bool get _isEditing => _plantaParaEditar != null;
 
   // ---------- Busca por nome (Kindwise) ----------
+
   final KindwisePlantService _plantService = KindwisePlantService();
   List<PlantSuggestion> _sugestions = [];
   bool _isLoading = false;
   bool _semResultados = false;
   Timer? _debounce;
 
-  // Espécie escolhida (por busca ou por foto). O nome exibido nunca muda
-  // depois do toque: é o mesmo que estava na lista.
+  // Espécie escolhida (por busca ou por foto).
+  // O nome exibido nunca muda depois do toque.
   PlantSuggestion? _especieSelecionada;
   bool _isResolvingSelecao = false;
-  String _ultimoTextoAutomatico = ''; // texto preenchido pelo app
+  String _ultimoTextoAutomatico = '';
 
   // ---------- Identificação por foto ----------
+
   final ImagePicker _picker = ImagePicker();
   Uint8List? _fotoBytes;
   bool _isIdentifying = false;
@@ -49,8 +54,9 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   String? _mensagemFoto;
 
   // Valores dos sliders
-  double _frequenciaRega = 7; // dias
-  double _luminosidadeIndex = 1; // 0: Muito pouca, 1: Pouca, 2: Média, 3: Muita
+
+  double _frequenciaRega = 7;
+  double _luminosidadeIndex = 1;
 
   final List<String> _niveisLuminosidade = [
     'Muito pouca',
@@ -66,14 +72,50 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     'Espada de São Jorge',
   ];
 
-  // Paleta de cores oficial do Nali-Sun
-  static const Color fundoBege = Color(0xFFFBE4AE);
-  static const Color verdeEscuro = Color(0xFF0B3740);
-  static const Color verdeBase = Color(0xFF81B380);
-  static const Color verdeAviso = Color(0xFF258A60);
-  static const Color verdeBorda = Color(0xFF5AA68C);
-  static const Color cardAmareloVerde = Color(0xFFD6D578);
-  static const Color verdeChip = Color(0xFFA7BF73);
+  // ==================== CORES DOS TEMAS ====================
+
+  bool get _temaEscuro =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  // Fundo
+  Color get _corFundo => _temaEscuro
+      ? AppColors.fundoEscuro
+      : AppColors.fundoBege;
+
+  // Texto principal
+  Color get _corTexto => _temaEscuro
+      ? AppColors.textoClaro
+      : AppColors.verdeEscuro;
+
+  // Texto secundário
+  Color get _corTextoSecundario => _temaEscuro
+      ? AppColors.textoSecundario
+      : AppColors.verdeEscuro;
+
+  // Destaques
+  Color get _corDestaque => _temaEscuro
+      ? AppColors.verdeDestaque
+      : AppColors.verdeAcao;
+
+  // Bordas
+  Color get _corBorda => _temaEscuro
+      ? AppColors.verdeBase
+      : AppColors.verdeAvisoCard;
+
+  // Card de upload e espécie selecionada
+  Color get _corCard => _temaEscuro
+      ? AppColors.cardEscuro
+      : AppColors.amareloCard;
+
+  // Campos e superfícies
+  Color get _corSuperficie => _temaEscuro
+      ? AppColors.superficieEscura
+      : Colors.white;
+
+  // Chips
+  Color get _corChip => _temaEscuro
+      ? AppColors.superficieEscura
+      : AppColors.verdeChartreuse;
 
   @override
   void initState() {
@@ -85,12 +127,14 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Captura os argumentos da rota quando a navegação é feita via pushNamed
+    // Captura os argumentos da rota quando a navegação é feita via pushNamed.
     final args = ModalRoute.of(context)?.settings.arguments;
+
     if (args is Map<String, dynamic> && _plantaParaEditar == null) {
       _plantaParaEditar = args;
       _preencherCamposParaEdicao();
-    } else if (widget.plantToEdit != null && _plantaParaEditar == null) {
+    } else if (widget.plantToEdit != null &&
+        _plantaParaEditar == null) {
       _plantaParaEditar = widget.plantToEdit;
       _preencherCamposParaEdicao();
     }
@@ -113,19 +157,23 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     // 1. Nome e Espécie
     _nomeController.text = p['name']?.toString() ?? '';
 
-    // Usa _setEspecieText para preencher o texto sem disparar a busca automática da API
+    // Preenche sem disparar uma nova busca automática.
     final especie = p['species']?.toString() ?? '';
+
     if (especie.isNotEmpty) {
       _setEspecieText(especie);
     }
 
     // 2. Frequência de Rega
-    final reqDays = (p['watering_frequency_days'] as num?)?.toDouble() ?? 7.0;
+    final reqDays =
+        (p['watering_frequency_days'] as num?)?.toDouble() ?? 7.0;
+
     _frequenciaRega = reqDays.clamp(1.0, 30.0);
 
-    // 3. Luminosidade (encontra o índice correspondente no texto)
+    // 3. Luminosidade
     final lumTexto = p['luminosity']?.toString() ?? '';
     final indexLum = _niveisLuminosidade.indexOf(lumTexto);
+
     if (indexLum != -1) {
       _luminosidadeIndex = indexLum.toDouble();
     }
@@ -141,25 +189,35 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   /// Preenche o campo de espécie sem disparar uma nova busca.
   void _setEspecieText(String text) {
     _ultimoTextoAutomatico = text;
+
     _especieController.removeListener(_onSearchChanged);
     _especieController.text = text;
-    _especieController.selection = TextSelection.collapsed(offset: text.length);
+
+    _especieController.selection = TextSelection.collapsed(
+      offset: text.length,
+    );
+
     _especieController.addListener(_onSearchChanged);
   }
 
   void _onSearchChanged() {
     final String texto = _especieController.text;
 
-    // Se o usuário editou o texto depois de escolher, a escolha deixa de valer.
-    // Se começou a digitar, os resultados da foto saem da frente.
+    // Se o usuário editou o texto depois de escolher,
+    // a escolha deixa de valer.
     final bool mudouEscolha =
-        _especieSelecionada != null && texto != _ultimoTextoAutomatico;
-    if (mudouEscolha || _resultadosFoto.isNotEmpty || _mensagemFoto != null) {
+        _especieSelecionada != null &&
+        texto != _ultimoTextoAutomatico;
+
+    if (mudouEscolha ||
+        _resultadosFoto.isNotEmpty ||
+        _mensagemFoto != null) {
       setState(() {
         if (mudouEscolha) {
           _especieSelecionada = null;
           _isResolvingSelecao = false;
         }
+
         _resultadosFoto = [];
         _mensagemFoto = null;
       });
@@ -167,12 +225,11 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
     _debounce?.cancel();
 
-    // 700 ms: cada busca gasta crédito nos detalhes, então não pesquisamos
-    // a cada tecla.
+    // 700 ms: evita pesquisar a cada tecla.
     _debounce = Timer(const Duration(milliseconds: 700), () async {
       final String query = _especieController.text.trim();
 
-      // Não pesquisa se o texto acabou de ser preenchido pelo app
+      // Não pesquisa se o texto acabou de ser preenchido pelo app.
       if (_especieSelecionada != null &&
           _especieController.text == _ultimoTextoAutomatico) {
         return;
@@ -180,21 +237,25 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
       if (query.length < 3) {
         if (!mounted) return;
+
         setState(() {
           _sugestions = [];
           _isLoading = false;
           _semResultados = false;
         });
+
         return;
       }
 
       if (!mounted) return;
+
       setState(() {
         _isLoading = true;
         _semResultados = false;
       });
 
       List<PlantSuggestion> response = [];
+
       try {
         response = await _plantService.searchSpecies(query);
       } catch (e) {
@@ -203,7 +264,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
       if (!mounted) return;
 
-      // Ignora respostas antigas (o texto já mudou)
+      // Ignora respostas antigas.
       if (_especieController.text.trim() == query) {
         setState(() {
           _sugestions = response;
@@ -214,13 +275,14 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     });
   }
 
-  /// Toque numa sugestão (da busca ou da foto).
+  /// Toque numa sugestão da busca ou da foto.
   Future<void> _selecionarSugestao(PlantSuggestion s) async {
     _debounce?.cancel();
-    _setEspecieText(s.displayName); // exatamente o nome que o usuário tocou
+
+    _setEspecieText(s.displayName);
     FocusScope.of(context).unfocus();
 
-    final bool precisaResolver = s.accessToken.isEmpty; // veio da foto
+    final bool precisaResolver = s.accessToken.isEmpty;
 
     setState(() {
       _sugestions = [];
@@ -232,13 +294,13 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       _isResolvingSelecao = precisaResolver;
     });
 
-    if (!precisaResolver) return; // os dados completos já vieram na busca
+    if (!precisaResolver) return;
 
-    // Resultado de foto: busca o token e os dados completos da espécie.
-    // O nome e a imagem exibidos não mudam.
+    // Resultado de foto: busca o token e os dados completos.
     final resolved = await _plantService.resolveSuggestion(s);
+
     if (!mounted) return;
-    if (!identical(_especieSelecionada, s)) return; // usuário mudou de ideia
+    if (!identical(_especieSelecionada, s)) return;
 
     setState(() {
       _especieSelecionada = resolved;
@@ -249,6 +311,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   void _removerEspecie() {
     _debounce?.cancel();
     _setEspecieText('');
+
     setState(() {
       _especieSelecionada = null;
       _isResolvingSelecao = false;
@@ -262,11 +325,16 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   // ======================================================================
 
   Future<void> _escolherFoto() async {
-    final ImageSource? origem = await showModalBottomSheet<ImageSource>(
+    final ImageSource? origem =
+        await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: fundoBege,
+      backgroundColor: _temaEscuro
+          ? AppColors.cardEscuro
+          : AppColors.fundoBege,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
       ),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -274,28 +342,36 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           children: [
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_camera_outlined,
-                color: verdeEscuro,
+                color: _temaEscuro
+                    ? AppColors.verdeDestaque
+                    : AppColors.verdeEscuro,
               ),
-              title: const Text(
+              title: Text(
                 'Tirar foto',
                 style: TextStyle(
-                  color: verdeEscuro,
+                  color: _temaEscuro
+                      ? AppColors.textoClaro
+                      : AppColors.verdeEscuro,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
-                color: verdeEscuro,
+                color: _temaEscuro
+                    ? AppColors.verdeDestaque
+                    : AppColors.verdeEscuro,
               ),
-              title: const Text(
+              title: Text(
                 'Escolher da galeria',
                 style: TextStyle(
-                  color: verdeEscuro,
+                  color: _temaEscuro
+                      ? AppColors.textoClaro
+                      : AppColors.verdeEscuro,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -308,11 +384,13 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     );
 
     if (origem == null) return;
+
     await _identificarFoto(origem);
   }
 
   Future<void> _identificarFoto(ImageSource origem) async {
     XFile? arquivo;
+
     try {
       arquivo = await _picker.pickImage(
         source: origem,
@@ -325,13 +403,16 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       _mostrarAviso('Não foi possível acessar a câmera ou a galeria.');
       return;
     }
-    if (arquivo == null) return; // usuário cancelou
+
+    if (arquivo == null) return;
 
     final Uint8List bytes = await arquivo.readAsBytes();
+
     if (!mounted) return;
 
     FocusScope.of(context).unfocus();
     _debounce?.cancel();
+
     setState(() {
       _fotoBytes = bytes;
       _fotoPath = arquivo!.path;
@@ -346,19 +427,24 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     });
 
     final result = await _plantService.identifyByImage(bytes);
+
     if (!mounted) return;
 
     setState(() {
       _isIdentifying = false;
+
       if (result == null) {
         _mensagemFoto =
-            'Não foi possível identificar a planta. Tente de novo ou busque pelo nome.';
+            'Não foi possível identificar a planta. '
+            'Tente de novo ou busque pelo nome.';
       } else if (!result.isPlant) {
         _mensagemFoto =
-            'Não parece haver uma planta nessa foto. Tente outra imagem.';
+            'Não parece haver uma planta nessa foto. '
+            'Tente outra imagem.';
       } else if (result.suggestions.isEmpty) {
         _mensagemFoto =
-            'Nenhuma espécie encontrada. Tente outra foto ou busque pelo nome.';
+            'Nenhuma espécie encontrada. '
+            'Tente outra foto ou busque pelo nome.';
       } else {
         _resultadosFoto = result.suggestions;
       }
@@ -367,8 +453,12 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
   void _mostrarAviso(String mensagem) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: verdeEscuro),
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: AppColors.verdeEscuro,
+      ),
     );
   }
 
@@ -386,18 +476,21 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     final nome = _nomeController.text.trim();
     final especie = _especieController.text.trim();
     final frequenciaRega = _frequenciaRega.round();
-    final luminosidade = _niveisLuminosidade[_luminosidadeIndex.round()];
+
+    final luminosidade =
+        _niveisLuminosidade[_luminosidadeIndex.round()];
 
     try {
-      String? imageUrl = _fotoPath; // Mantém a URL atual por padrão
+      String? imageUrl = _fotoPath;
 
-      // Se o usuário selecionou uma NOVA foto (bytes presentes), faz o upload
+      // Se o usuário selecionou uma nova foto, faz o upload.
       if (_fotoBytes != null) {
         imageUrl = await PlantDAO.uploadFotoSupabase(_fotoBytes!);
       }
 
       if (_isEditing) {
-        final plantId = int.parse(_plantaParaEditar!['id'].toString());
+        final plantId =
+            int.parse(_plantaParaEditar!['id'].toString());
 
         await PlantDAO.updatePlant(
           plantId: plantId,
@@ -422,7 +515,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       await context.read<PlantProvider>().carregarPlantas();
 
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -430,11 +523,11 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                 ? 'Planta atualizada com sucesso! 🌿'
                 : 'Planta cadastrada com sucesso! 🌿',
           ),
-          backgroundColor: verdeAviso,
+          backgroundColor: AppColors.verdeAcao,
         ),
       );
 
-      // Retorna 'true' para atualizar as listas e telas anteriores
+      // Retorna true para atualizar as listas anteriores.
       Navigator.pop(context, true);
     } catch (e) {
       debugPrint('Erro ao salvar planta no Supabase: $e');
@@ -461,22 +554,23 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: fundoBege,
+      backgroundColor: _corFundo,
       appBar: AppBar(
-        backgroundColor: verdeEscuro,
+        // AppBar permanece igual nos dois temas.
+        backgroundColor: AppColors.verdeEscuro,
         elevation: 0,
         toolbarHeight: 64,
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: Center(
             child: Material(
-              color: verdeBase,
+              color: AppColors.verdeBase,
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back,
-                  color: verdeEscuro,
+                  color: AppColors.verdeEscuro,
                   size: 22,
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -487,8 +581,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         ),
         title: Text(
           _isEditing ? 'Editar Planta' : 'Nova Planta',
-          style: TextStyle(
-            color: fundoBege,
+          style: const TextStyle(
+            color: AppColors.fundoBege,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -499,10 +593,15 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: TextButton(
               onPressed: _salvarPlanta,
-              style: TextButton.styleFrom(foregroundColor: fundoBege),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.fundoBege,
+              ),
               child: const Text(
                 'Salvar',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -511,21 +610,25 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 20,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ==================== FOTO (identifica a espécie) ====================
+                // ==================== FOTO ====================
+
                 _buildCardUploadFoto(),
 
                 if (_mensagemFoto != null) ...[
                   const SizedBox(height: 10),
                   Text(
                     _mensagemFoto!,
-                    style: const TextStyle(
-                      color: verdeEscuro,
+                    style: TextStyle(
+                      color: _corTexto,
                       fontSize: 12.5,
                       fontStyle: FontStyle.italic,
                     ),
@@ -534,68 +637,85 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
                 if (_resultadosFoto.isNotEmpty) ...[
                   const SizedBox(height: 14),
-                  _buildRotulo('Possíveis espécies · toque para escolher'),
+                  _buildRotulo(
+                    'Possíveis espécies · toque para escolher',
+                  ),
                   const SizedBox(height: 6),
                   _buildListaSugestoes(
                     _resultadosFoto,
                     mostrarProbabilidade: true,
                   ),
                 ],
+
                 const SizedBox(height: 20),
 
                 // ==================== NOME DA PLANTA ====================
+
                 _buildRotulo('Nome da Planta'),
                 const SizedBox(height: 6),
+
                 TextFormField(
                   controller: _nomeController,
-                  style: const TextStyle(color: verdeEscuro, fontSize: 14),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Informe o nome da planta'
-                      : null,
+                  style: TextStyle(
+                    color: _corTexto,
+                    fontSize: 14,
+                  ),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Informe o nome da planta'
+                          : null,
                   decoration: _buildInputDecoration(
                     hint: 'Ex.: minha Jiboia',
                     icon: Icons.eco_outlined,
                   ),
                 ),
+
                 const SizedBox(height: 16),
 
                 // ==================== ESPÉCIE / TIPO ====================
+
                 _buildRotulo('Espécie / Tipo'),
                 const SizedBox(height: 6),
+
                 TextFormField(
                   controller: _especieController,
-                  style: const TextStyle(color: verdeEscuro, fontSize: 14),
+                  style: TextStyle(
+                    color: _corTexto,
+                    fontSize: 14,
+                  ),
                   decoration: _buildInputDecoration(
                     hint: 'Busque ou digite a espécie',
                     icon: Icons.search_outlined,
                     suffix: _isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
+                        ? Padding(
+                            padding: const EdgeInsets.all(12),
                             child: SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: verdeAviso,
+                                color: _corDestaque,
                               ),
                             ),
                           )
                         : null,
                   ),
                 ),
+
                 const SizedBox(height: 10),
 
-                // Resultados da busca (com imagem)
+                // Resultados da busca.
                 if (_sugestions.isNotEmpty) ...[
                   _buildListaSugestoes(_sugestions),
                   const SizedBox(height: 10),
                 ],
 
                 if (_semResultados && _sugestions.isEmpty) ...[
-                  const Text(
-                    'Nenhuma espécie encontrada. Você pode digitar o nome mesmo assim.',
+                  Text(
+                    'Nenhuma espécie encontrada. '
+                    'Você pode digitar o nome mesmo assim.',
                     style: TextStyle(
-                      color: verdeEscuro,
+                      color: _corTextoSecundario,
                       fontSize: 12.5,
                       fontStyle: FontStyle.italic,
                     ),
@@ -603,13 +723,14 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                   const SizedBox(height: 10),
                 ],
 
-                // Espécie escolhida
+                // Espécie escolhida.
                 if (_especieSelecionada != null) ...[
                   _buildCardEspecieSelecionada(),
                   const SizedBox(height: 10),
                 ],
 
                 // ==================== CHIPS DE SUGESTÃO ====================
+
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,
@@ -617,19 +738,23 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                     return ActionChip(
                       label: Text(
                         especie,
-                        style: const TextStyle(
-                          color: verdeEscuro,
+                        style: TextStyle(
+                          color: _corTexto,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      backgroundColor: verdeChip,
-                      side: const BorderSide(color: verdeEscuro, width: 1),
+                      backgroundColor: _corChip,
+                      side: BorderSide(
+                        color: _temaEscuro
+                            ? AppColors.verdeDestaque
+                            : AppColors.verdeEscuro,
+                        width: 1,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       onPressed: () {
-                        // Escrever no campo dispara a busca normalmente
                         setState(() {
                           _especieController.text = especie;
                         });
@@ -637,12 +762,15 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                     );
                   }).toList(),
                 ),
+
                 const SizedBox(height: 20),
 
                 // ==================== SLIDER FREQUÊNCIA DE REGA ====================
+
                 _buildCardSlider(
                   titulo: 'Frequência de Rega',
-                  subtitulo: 'A cada ${_frequenciaRega.round()} dias',
+                  subtitulo:
+                      'A cada ${_frequenciaRega.round()} dias',
                   icone: Icons.water_drop_outlined,
                   child: SliderTheme(
                     data: _sliderThemeData(),
@@ -652,17 +780,22 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                       max: 30,
                       divisions: 29,
                       onChanged: (val) {
-                        setState(() => _frequenciaRega = val);
+                        setState(() {
+                          _frequenciaRega = val;
+                        });
                       },
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
 
                 // ==================== SLIDER LUMINOSIDADE ====================
+
                 _buildCardSlider(
                   titulo: 'Luminosidade',
-                  subtitulo: _niveisLuminosidade[_luminosidadeIndex.round()],
+                  subtitulo:
+                      _niveisLuminosidade[_luminosidadeIndex.round()],
                   icone: Icons.wb_sunny_outlined,
                   child: SliderTheme(
                     data: _sliderThemeData(),
@@ -672,7 +805,9 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                       max: 3,
                       divisions: 3,
                       onChanged: (val) {
-                        setState(() => _luminosidadeIndex = val);
+                        setState(() {
+                          _luminosidadeIndex = val;
+                        });
                       },
                     ),
                   ),
@@ -689,8 +824,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   // WIDGETS AUXILIARES
   // ======================================================================
 
-  /// Lista de espécies com imagem, nome comum (ou científico) e,
-  /// quando existe, o nome científico em itálico.
+  /// Lista de espécies com imagem, nome comum e nome científico.
   Widget _buildListaSugestoes(
     List<PlantSuggestion> itens, {
     bool mostrarProbabilidade = false,
@@ -698,12 +832,10 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     return Container(
       constraints: const BoxConstraints(maxHeight: 340),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _corSuperficie,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: verdeBorda),
+        border: Border.all(color: _corBorda),
       ),
-      // Material transparente entre o Container colorido e o ListTile
-      // (evita o erro "ListTile background color or ink splashes may be invisible")
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
@@ -712,23 +844,29 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           itemCount: itens.length,
-          separatorBuilder: (context, index) =>
-              Divider(height: 1, color: verdeBorda.withValues(alpha: 0.3)),
+          separatorBuilder: (context, index) => Divider(
+            height: 1,
+            color: _corBorda.withValues(alpha: 0.3),
+          ),
           itemBuilder: (context, index) {
             final item = itens[index];
+
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 4,
               ),
-              leading: _PlantImage(url: item.imageUrl, size: 52),
+              leading: _PlantImage(
+                url: item.imageUrl,
+                size: 52,
+              ),
               title: Text(
                 item.displayName,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: verdeEscuro,
+                  color: _corTexto,
                 ),
               ),
               subtitle: item.hasDistinctScientificName
@@ -736,21 +874,22 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                       item.scientificName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontStyle: FontStyle.italic,
-                        color: verdeEscuro,
+                        color: _corTextoSecundario,
                       ),
                     )
                   : null,
-              trailing: (mostrarProbabilidade && item.probability != null)
-                  ? Text(
-                      '${(item.probability! * 100).round()}%',
-                      style: const TextStyle(
-                        color: verdeAviso,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
+              trailing:
+                  (mostrarProbabilidade && item.probability != null)
+                      ? Text(
+                          '${(item.probability! * 100).round()}%',
+                          style: TextStyle(
+                            color: _corDestaque,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
               onTap: () => _selecionarSugestao(item),
             );
           },
@@ -765,13 +904,19 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cardAmareloVerde,
+        color: _corCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: verdeAviso, width: 1.5),
+        border: Border.all(
+          color: _corDestaque,
+          width: 1.5,
+        ),
       ),
       child: Row(
         children: [
-          _PlantImage(url: especie.imageUrl, size: 72),
+          _PlantImage(
+            url: especie.imageUrl,
+            size: 72,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -781,8 +926,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                   especie.displayName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: verdeEscuro,
+                  style: TextStyle(
+                    color: _corTexto,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -793,8 +938,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                     especie.scientificName,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: verdeEscuro,
+                    style: TextStyle(
+                      color: _corTextoSecundario,
                       fontSize: 13,
                       fontStyle: FontStyle.italic,
                     ),
@@ -802,35 +947,41 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
                 ],
                 const SizedBox(height: 6),
                 if (_isResolvingSelecao)
-                  const Row(
+                  Row(
                     children: [
                       SizedBox(
                         width: 12,
                         height: 12,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: verdeAviso,
+                          color: _corDestaque,
                         ),
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         'Carregando dados da planta…',
-                        style: TextStyle(color: verdeEscuro, fontSize: 12),
+                        style: TextStyle(
+                          color: _corTextoSecundario,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   )
                 else if (especie.details.isNotEmpty)
-                  const Row(
+                  Row(
                     children: [
                       Icon(
                         Icons.check_circle_outline,
-                        color: verdeAviso,
+                        color: _corDestaque,
                         size: 14,
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         'Dados da espécie prontos',
-                        style: TextStyle(color: verdeEscuro, fontSize: 12),
+                        style: TextStyle(
+                          color: _corTextoSecundario,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -839,7 +990,11 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           ),
           IconButton(
             tooltip: 'Remover espécie',
-            icon: const Icon(Icons.close, color: verdeEscuro, size: 20),
+            icon: Icon(
+              Icons.close,
+              color: _corTexto,
+              size: 20,
+            ),
             onPressed: _removerEspecie,
           ),
         ],
@@ -849,15 +1004,19 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
 
   Widget _buildCardUploadFoto() {
     return Material(
-      color: cardAmareloVerde,
+      color: _corCard,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: verdeAviso, width: 1.5),
+        side: BorderSide(
+          color: _corDestaque,
+          width: 1.5,
+        ),
       ),
       child: InkWell(
         onTap: _isIdentifying ? null : _escolherFoto,
-        child: (_fotoBytes == null && (_fotoPath == null || _fotoPath!.isEmpty))
+        child: (_fotoBytes == null &&
+                (_fotoPath == null || _fotoPath!.isEmpty))
             ? _conteudoUploadVazio()
             : _conteudoFotoSelecionada(),
       ),
@@ -865,28 +1024,38 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   }
 
   Widget _conteudoUploadVazio() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 24,
+        horizontal: 16,
+      ),
       child: Column(
         children: [
           CircleAvatar(
             radius: 23,
-            backgroundColor: verdeAviso,
-            child: Icon(Icons.add_a_photo_outlined, color: fundoBege, size: 22),
+            backgroundColor: _corDestaque,
+            child: const Icon(
+              Icons.add_a_photo_outlined,
+              color: AppColors.fundoBege,
+              size: 22,
+            ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
             'Tirar foto ou escolher da galeria',
             style: TextStyle(
-              color: verdeEscuro,
+              color: _corTexto,
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             'Identificamos a espécie pela foto',
-            style: TextStyle(color: verdeEscuro, fontSize: 12),
+            style: TextStyle(
+              color: _corTextoSecundario,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -909,7 +1078,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         height: 180,
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _conteudoUploadVazio(),
+        errorBuilder: (context, error, stackTrace) =>
+            _conteudoUploadVazio(),
       );
     }
 
@@ -919,16 +1089,18 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         if (_isIdentifying)
           Positioned.fill(
             child: Container(
-              color: verdeEscuro.withValues(alpha: 0.6),
+              color: AppColors.verdeEscuro.withValues(alpha: 0.6),
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: fundoBege),
+                  CircularProgressIndicator(
+                    color: AppColors.fundoBege,
+                  ),
                   SizedBox(height: 10),
                   Text(
                     'Identificando a planta…',
                     style: TextStyle(
-                      color: fundoBege,
+                      color: AppColors.fundoBege,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -941,19 +1113,29 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
             right: 8,
             bottom: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 5,
+              ),
               decoration: BoxDecoration(
-                color: verdeEscuro.withValues(alpha: 0.75),
+                color: AppColors.verdeEscuro.withValues(alpha: 0.75),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.refresh, size: 14, color: fundoBege),
+                  Icon(
+                    Icons.refresh,
+                    size: 14,
+                    color: AppColors.fundoBege,
+                  ),
                   SizedBox(width: 4),
                   Text(
                     'Trocar foto',
-                    style: TextStyle(color: fundoBege, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.fundoBege,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -972,14 +1154,32 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [cardAmareloVerde, verdeChip],
-        ),
+        // O gradiente original do tema claro foi preservado.
+        gradient: _temaEscuro
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.amareloCard,
+                  AppColors.verdeChartreuse,
+                ],
+              ),
+        color: _temaEscuro ? AppColors.cardEscuro : null,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        border: _temaEscuro
+            ? Border.all(
+                color: AppColors.verdeBase.withValues(alpha: 0.5),
+              )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: _temaEscuro ? 0.15 : 0.08,
+            ),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -989,12 +1189,16 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
             children: [
               Row(
                 children: [
-                  Icon(icone, color: verdeEscuro, size: 20),
+                  Icon(
+                    icone,
+                    color: _corTexto,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     titulo,
-                    style: const TextStyle(
-                      color: verdeEscuro,
+                    style: TextStyle(
+                      color: _corTexto,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1003,8 +1207,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
               ),
               Text(
                 subtitulo,
-                style: const TextStyle(
-                  color: verdeEscuro,
+                style: TextStyle(
+                  color: _corTexto,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1021,8 +1225,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   Widget _buildRotulo(String texto) {
     return Text(
       texto,
-      style: const TextStyle(
-        color: verdeEscuro,
+      style: TextStyle(
+        color: _corTexto,
         fontSize: 13,
         fontWeight: FontWeight.bold,
       ),
@@ -1038,59 +1242,96 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
       suffixIcon: suffix,
       hintText: hint,
       hintStyle: TextStyle(
-        color: verdeEscuro.withValues(alpha: 0.5),
+        color: _corTextoSecundario.withValues(alpha: 0.5),
         fontSize: 13,
       ),
-      prefixIcon: Icon(icon, color: verdeEscuro, size: 20),
+      prefixIcon: Icon(
+        icon,
+        color: _temaEscuro
+            ? AppColors.verdeDestaque
+            : AppColors.verdeEscuro,
+        size: 20,
+      ),
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      fillColor: _corSuperficie,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 12,
+      ),
       isDense: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: verdeBorda, width: 1.2),
+        borderSide: BorderSide(
+          color: _corBorda,
+          width: 1.2,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: verdeBorda, width: 1.2),
+        borderSide: BorderSide(
+          color: _corBorda,
+          width: 1.2,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: verdeAviso, width: 1.8),
+        borderSide: BorderSide(
+          color: _corDestaque,
+          width: 1.8,
+        ),
       ),
     );
   }
 
   SliderThemeData _sliderThemeData() {
     return SliderThemeData(
-      activeTrackColor: verdeAviso,
-      inactiveTrackColor: cardAmareloVerde,
-      thumbColor: verdeEscuro,
-      overlayColor: verdeAviso.withValues(alpha: 0.2),
+      activeTrackColor: _corDestaque,
+      inactiveTrackColor: _temaEscuro
+          ? AppColors.superficieEscura
+          : AppColors.amareloCard,
+      thumbColor: _temaEscuro
+          ? AppColors.textoClaro
+          : AppColors.verdeEscuro,
+      overlayColor: _corDestaque.withValues(alpha: 0.2),
       trackHeight: 6,
-      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+      thumbShape: const RoundSliderThumbShape(
+        enabledThumbRadius: 9,
+      ),
     );
   }
 }
 
-/// Imagem da planta com spinner, fallback de ícone e, na web, fallback para
-/// <img> HTML quando o CDN da imagem não permite CORS (causa comum de
-/// "a imagem não carrega" no Flutter Web).
+/// Imagem da planta com spinner, fallback de ícone e, na web,
+/// fallback para <img> HTML quando o CDN não permite CORS.
 class _PlantImage extends StatelessWidget {
-  const _PlantImage({required this.url, required this.size});
+  const _PlantImage({
+    required this.url,
+    required this.size,
+  });
 
   final String url;
   final double size;
 
   @override
   Widget build(BuildContext context) {
+    final temaEscuro =
+        Theme.of(context).brightness == Brightness.dark;
+
+    final corFundo = temaEscuro
+        ? AppColors.superficieEscura
+        : AppColors.verdeChartreuse;
+
+    final corIcone = temaEscuro
+        ? AppColors.verdeDestaque
+        : AppColors.verdeEscuro;
+
     final fallback = Container(
       width: size,
       height: size,
-      color: _AddPlantScreenState.verdeChip.withValues(alpha: 0.35),
+      color: corFundo.withValues(alpha: 0.35),
       child: Icon(
         Icons.eco_outlined,
-        color: _AddPlantScreenState.verdeEscuro,
+        color: corIcone,
         size: size * 0.45,
       ),
     );
@@ -1105,23 +1346,30 @@ class _PlantImage extends StatelessWidget {
             : Image.network(
                 url,
                 fit: BoxFit.cover,
-                // Requer Flutter 3.22+. Só tem efeito na web.
-                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+
+                // Só tem efeito na web.
+                webHtmlElementStrategy:
+                    WebHtmlElementStrategy.fallback,
+
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
+
                   return Center(
                     child: SizedBox(
                       width: size * 0.35,
                       height: size * 0.35,
-                      child: const CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: _AddPlantScreenState.verdeAviso,
+                        color: corIcone,
                       ),
                     ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  debugPrint('Falha ao carregar imagem ($url): $error');
+                  debugPrint(
+                    'Falha ao carregar imagem ($url): $error',
+                  );
+
                   return fallback;
                 },
               ),

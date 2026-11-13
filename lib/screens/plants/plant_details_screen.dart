@@ -1,9 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../database/plant_dao.dart';
 import '../../providers/plant_provider.dart';
 import '../../app/routes.dart';
+import '../../utils/constants.dart';
 
 class PlantDetailsScreen extends StatefulWidget {
   final String plantId;
@@ -17,6 +19,7 @@ class PlantDetailsScreen extends StatefulWidget {
 class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
   // ==================== PALETA DE CORES ====================
 
+  // Cores originais do tema claro
   static const Color verdeEscuro = Color(0xFF0B3740);
   static const Color verdeMedio = Color(0xFF258A60);
   static const Color verdeFolha = Color(0xFF5AA68C);
@@ -24,6 +27,51 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
   static const Color amareloVerde = Color(0xFFA7BF73);
   static const Color amareloCreme = Color(0xFFD6D578);
   static const Color fundoAmarelado = Color(0xFFFBE4AE);
+
+  // Identificação do tema atual
+  bool get _temaEscuro =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  // ==================== CORES ADAPTÁVEIS ====================
+
+  Color get _fundo =>
+      _temaEscuro ? AppColors.fundoEscuro : fundoAmarelado;
+
+  Color get _texto =>
+      _temaEscuro ? AppColors.textoClaro : verdeEscuro;
+
+  Color get _textoSecundario =>
+      _temaEscuro ? AppColors.textoSecundario : verdeEscuro;
+
+  // Cor dos textos da AppBar
+  Color get _textoAppBar =>
+      _temaEscuro ? AppColors.textoClaro : fundoAmarelado;
+
+  Color get _destaque =>
+      _temaEscuro ? AppColors.verdeDestaque : verdeMedio;
+
+  Color get _corIcone =>
+      _temaEscuro ? AppColors.verdeDestaque : verdeEscuro;
+
+  List<Color> get _gradienteVerde => _temaEscuro
+      ? [
+          AppColors.cardEscuro,
+          AppColors.superficieEscura,
+        ]
+      : [
+          verdeFolha,
+          verdeClaro,
+        ];
+
+  List<Color> get _gradienteAmarelo => _temaEscuro
+      ? [
+          AppColors.cardEscuro,
+          AppColors.superficieEscura,
+        ]
+      : [
+          amareloCreme,
+          amareloVerde,
+        ];
 
   // ==================== ESTADO DA TELA ====================
 
@@ -67,6 +115,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
     }
 
     int totalRegas = 0;
+
     if (resultado != null) {
       totalRegas = await PlantDAO.buscarRegasDoMes(widget.plantId);
     }
@@ -81,27 +130,35 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
   }
 
   // ==================== CÁLCULO DE ASSIDUIDADE ====================
-  double _calcularAssiduidade({required int totalRegasRealizadas}) {
-    if (planta == null) return 1.0; // 100%
 
-    final createdAtString = planta!['created_at']?.toString();
-    final createdAt = DateTime.tryParse(createdAtString ?? '');
+  double _calcularAssiduidade({
+    required int totalRegasRealizadas,
+  }) {
+    if (planta == null) return 1.0;
+
+    final createdAtString =
+        planta!['created_at']?.toString();
+
+    final createdAt =
+        DateTime.tryParse(createdAtString ?? '');
+
     if (createdAt == null) return 1.0;
 
     final frequencia =
         (planta!['watering_frequency_days'] as num?)?.toInt() ?? 1;
-    final diasCultivo = DateTime.now().difference(createdAt).inDays;
 
-    // Se o cultivo começou hoje ou a frequência é 0, assume 100%
+    final diasCultivo =
+        DateTime.now().difference(createdAt).inDays;
+
     if (diasCultivo <= 0 || frequencia <= 0) return 1.0;
 
     final regasEsperadas = diasCultivo / frequencia;
 
     if (regasEsperadas <= 0) return 1.0;
 
-    final percentual = totalRegasRealizadas / regasEsperadas;
+    final percentual =
+        totalRegasRealizadas / regasEsperadas;
 
-    // Garante que o valor fique entre 0.0 e 1.0 (0% a 100%)
     return percentual.clamp(0.0, 1.0);
   }
 
@@ -126,8 +183,11 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rega registrada com sucesso! 💧'),
+        SnackBar(
+          content: const Text(
+            'Rega registrada com sucesso! 💧',
+          ),
+          backgroundColor: _destaque,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -136,7 +196,9 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Não foi possível registrar a rega: $e'),
+          content: Text(
+            'Não foi possível registrar a rega: $e',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -149,14 +211,22 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
     }
   }
 
-  // ==================== DIAS DE CULTIVO ===================
+  // ==================== DIAS DE CULTIVO ====================
+
   int _calcularDiasCultivo() {
     if (planta == null) return 0;
-    final createdAtString = planta!['created_at']?.toString();
-    final createdAt = DateTime.tryParse(createdAtString ?? '');
+
+    final createdAtString =
+        planta!['created_at']?.toString();
+
+    final createdAt =
+        DateTime.tryParse(createdAtString ?? '');
+
     if (createdAt == null) return 0;
 
-    final diferenca = DateTime.now().difference(createdAt).inDays;
+    final diferenca =
+        DateTime.now().difference(createdAt).inDays;
+
     return diferenca < 0 ? 0 : diferenca;
   }
 
@@ -169,17 +239,27 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Excluir planta?'),
+          backgroundColor: _temaEscuro
+              ? AppColors.cardEscuro
+              : fundoAmarelado,
+          title: Text(
+            'Excluir planta?',
+            style: TextStyle(color: _texto),
+          ),
           content: Text(
             'Deseja realmente excluir ${planta!['name']}? '
             'Essa ação não poderá ser desfeita.',
+            style: TextStyle(color: _textoSecundario),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context, false);
               },
-              child: const Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(color: _destaque),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -231,65 +311,103 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     if (carregando) {
-      return const Scaffold(
-        backgroundColor: fundoAmarelado,
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: _fundo,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: _destaque,
+          ),
+        ),
       );
     }
 
     if (planta == null) {
       return Scaffold(
-        backgroundColor: fundoAmarelado,
+        backgroundColor: _fundo,
         appBar: AppBar(
-          backgroundColor: verdeEscuro,
-          title: const Text(
-            'Detalhes da planta',
-            style: TextStyle(color: fundoAmarelado),
-          ),
-          iconTheme: const IconThemeData(color: fundoAmarelado),
+          backgroundColor:
+              _temaEscuro ? AppColors.fundoEscuro : verdeEscuro,
+          foregroundColor: _textoAppBar,
+          title: const Text('Detalhes da planta'),
         ),
-        body: const Center(child: Text('Planta não encontrada.')),
+        body: Center(
+          child: Text(
+            'Planta não encontrada.',
+            style: TextStyle(color: _texto),
+          ),
+        ),
       );
     }
 
-    final nome = planta!['name']?.toString() ?? 'Planta';
+    final nome =
+        planta!['name']?.toString() ?? 'Planta';
 
-    final especie = planta!['species']?.toString() ?? 'Espécie não informada';
+    final especie =
+        planta!['species']?.toString() ??
+        'Espécie não informada';
 
     final frequencia =
         (planta!['watering_frequency_days'] as num?)?.toInt() ?? 1;
 
-    final luminosidade = planta!['luminosity']?.toString() ?? 'Não informada';
+    final luminosidade =
+        planta!['luminosity']?.toString() ?? 'Não informada';
 
-    final imagem = planta!['image_path']?.toString() ?? '';
+    final imagem =
+        planta!['image_path']?.toString() ?? '';
 
     final assiduidadeValor = _calcularAssiduidade(
       totalRegasRealizadas: regasDoMes,
     );
-    final assiduidadePorcentagem = (assiduidadeValor * 100).toInt();
+
+    final assiduidadePorcentagem =
+        (assiduidadeValor * 100).toInt();
 
     return Scaffold(
-      backgroundColor: fundoAmarelado,
+      backgroundColor: _fundo,
 
       // ==================== APP BAR ====================
-      appBar: AppBar(
-        backgroundColor: verdeEscuro,
-        elevation: 0,
 
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: fundoAmarelado),
-          onPressed: () => Navigator.maybePop(context),
+      appBar: AppBar(
+        backgroundColor:
+            _temaEscuro ? AppColors.fundoEscuro : verdeEscuro,
+        elevation: 0,
+        leadingWidth: 56,
+
+        // Seta de voltar
+        leading: Center(
+          child: Container(
+            margin: const EdgeInsets.only(left: 8),
+            decoration: BoxDecoration(
+              color: _temaEscuro
+                  ? AppColors.cardEscuro
+                  : verdeClaro,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: _temaEscuro
+                    ? AppColors.textoClaro
+                    : verdeEscuro,
+                size: 22,
+              ),
+              onPressed: () => Navigator.maybePop(context),
+              tooltip: 'Voltar',
+            ),
+          ),
         ),
 
+        // Nome e espécie da planta
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               nome,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: fundoAmarelado,
+              style: TextStyle(
+                color: _textoAppBar,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -298,8 +416,8 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
               especie,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: fundoAmarelado,
+              style: TextStyle(
+                color: _textoAppBar.withValues(alpha: 0.85),
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
               ),
@@ -307,21 +425,29 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
           ],
         ),
 
+        // Ações da AppBar
         actions: [
           IconButton(
-            icon: const CircleAvatar(
-              backgroundColor: amareloVerde,
+            icon: CircleAvatar(
+              backgroundColor: _temaEscuro
+                  ? AppColors.cardEscuro
+                  : amareloVerde,
               radius: 18,
-              child: Icon(Icons.edit_outlined, size: 18, color: verdeEscuro),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: _temaEscuro
+                    ? AppColors.verdeDestaque
+                    : verdeEscuro,
+              ),
             ),
             onPressed: () async {
               final atualizou = await Navigator.pushNamed(
                 context,
-                AppRoutes.plant, // Rota configurada para a AddPlantScreen
-                arguments: planta, // Passa o Map da planta carregada
+                AppRoutes.plant,
+                arguments: planta,
               );
 
-              // Se o formulário retornou 'true', recarrega os dados da planta na tela
               if (atualizou == true) {
                 await _carregarPlanta();
               }
@@ -329,16 +455,21 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
           ),
 
           IconButton(
-            icon: const CircleAvatar(
-              backgroundColor: verdeFolha,
+            icon: CircleAvatar(
+              backgroundColor: _temaEscuro
+                  ? AppColors.cardEscuro
+                  : verdeFolha,
               radius: 18,
               child: Icon(
                 Icons.delete_outline,
                 size: 18,
-                color: fundoAmarelado,
+                color: _temaEscuro
+                    ? AppColors.textoClaro
+                    : fundoAmarelado,
               ),
             ),
-            onPressed: processandoExclusao ? null : _excluirPlanta,
+            onPressed:
+                processandoExclusao ? null : _excluirPlanta,
           ),
 
           const SizedBox(width: 8),
@@ -346,6 +477,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       ),
 
       // ==================== CONTEÚDO ====================
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -371,6 +503,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             const SizedBox(height: 16),
 
             // ==================== REGA E LUMINOSIDADE ====================
+
             Row(
               children: [
                 Expanded(
@@ -380,7 +513,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                         'A cada $frequencia '
                         '${frequencia == 1 ? 'dia' : 'dias'}',
                     subtitle: _textoProximaRega(frequencia),
-                    gradientColors: [verdeFolha, verdeClaro],
+                    gradientColors: _gradienteVerde,
                   ),
                 ),
 
@@ -391,7 +524,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                     icon: Icons.wb_sunny_outlined,
                     title: luminosidade,
                     subtitle: 'Luminosidade',
-                    gradientColors: [amareloCreme, amareloVerde],
+                    gradientColors: _gradienteAmarelo,
                   ),
                 ),
               ],
@@ -400,12 +533,17 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             const SizedBox(height: 16),
 
             // ==================== BOTÃO REGAR ====================
+
             ElevatedButton(
-              onPressed: processandoRega ? null : _regarAgora,
+              onPressed:
+                  processandoRega ? null : _regarAgora,
               style: ElevatedButton.styleFrom(
-                backgroundColor: verdeMedio,
-                foregroundColor: fundoAmarelado,
-                disabledBackgroundColor: verdeMedio.withValues(alpha: 0.6),
+                backgroundColor: _destaque,
+                foregroundColor: _temaEscuro
+                    ? AppColors.fundoEscuro
+                    : fundoAmarelado,
+                disabledBackgroundColor:
+                    _destaque.withValues(alpha: 0.6),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -416,21 +554,28 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (processandoRega)
-                    const SizedBox(
+                    SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: fundoAmarelado,
+                        color: _temaEscuro
+                            ? AppColors.textoClaro
+                            : fundoAmarelado,
                       ),
                     )
                   else
-                    const Text('💦 ', style: TextStyle(fontSize: 16)),
+                    const Text(
+                      '💦 ',
+                      style: TextStyle(fontSize: 16),
+                    ),
 
                   const SizedBox(width: 4),
 
                   Text(
-                    processandoRega ? 'Registrando...' : 'Regar Agora',
+                    processandoRega
+                        ? 'Registrando...'
+                        : 'Regar Agora',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -443,11 +588,12 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             const SizedBox(height: 16),
 
             // ==================== ASSIDUIDADE ====================
+
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [amareloCreme, amareloVerde],
+                gradient: LinearGradient(
+                  colors: _gradienteAmarelo,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -457,20 +603,21 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(
                             Icons.stars_outlined,
                             size: 20,
-                            color: verdeEscuro,
+                            color: _corIcone,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Assiduidade',
                             style: TextStyle(
-                              color: verdeEscuro,
+                              color: _texto,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -480,8 +627,8 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
                       Text(
                         '$assiduidadePorcentagem%',
-                        style: const TextStyle(
-                          color: verdeEscuro,
+                        style: TextStyle(
+                          color: _texto,
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
@@ -496,16 +643,22 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                     child: LinearProgressIndicator(
                       value: assiduidadeValor,
                       minHeight: 8,
-                      backgroundColor: amareloCreme,
-                      valueColor: AlwaysStoppedAnimation<Color>(verdeMedio),
+                      backgroundColor: _temaEscuro
+                          ? AppColors.superficieEscura
+                          : amareloCreme,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(_destaque),
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  Text(
                     'Uma rotina gentil, um jardim saudável.',
-                    style: TextStyle(color: verdeEscuro, fontSize: 12),
+                    style: TextStyle(
+                      color: _texto,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -514,6 +667,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             const SizedBox(height: 16),
 
             // ==================== ESTATÍSTICAS ====================
+
             Row(
               children: [
                 Expanded(
@@ -521,7 +675,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                     icon: Icons.calendar_today_outlined,
                     value: regasDoMes.toString(),
                     label: 'Total de regas no mês',
-                    gradientColors: [verdeFolha, verdeClaro],
+                    gradientColors: _gradienteVerde,
                   ),
                 ),
 
@@ -532,7 +686,9 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                     icon: Icons.eco_outlined,
                     value: _calcularDiasCultivo().toString(),
                     label: 'Total de dias de cultivo',
-                    gradientColors: [amareloVerde, verdeClaro],
+                    gradientColors: _temaEscuro
+                        ? _gradienteVerde
+                        : [amareloVerde, verdeClaro],
                   ),
                 ),
               ],
@@ -549,16 +705,25 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
     return Container(
       height: 180,
       width: double.infinity,
-      color: verdeFolha.withValues(alpha: 0.3),
-      child: const Icon(Icons.eco, size: 48, color: verdeEscuro),
+      color: _temaEscuro
+          ? AppColors.cardEscuro
+          : verdeFolha.withValues(alpha: 0.3),
+      child: Icon(
+        Icons.eco,
+        size: 48,
+        color: _corIcone,
+      ),
     );
   }
 
   // ==================== PRÓXIMA REGA ====================
 
   String _textoProximaRega(int frequencia) {
-    final ultimaRegaString = planta!['last_watered_at']?.toString();
-    final cadastroString = planta!['created_at']?.toString();
+    final ultimaRegaString =
+        planta!['last_watered_at']?.toString();
+
+    final cadastroString =
+        planta!['created_at']?.toString();
 
     final referencia =
         DateTime.tryParse(ultimaRegaString ?? '') ??
@@ -568,11 +733,13 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       return 'Data não disponível';
     }
 
-    final proximaRega = referencia.add(Duration(days: frequencia));
+    final proximaRega =
+        referencia.add(Duration(days: frequencia));
 
     final hoje = DateTime.now();
 
-    final hojeData = DateTime(hoje.year, hoje.month, hoje.day);
+    final hojeData =
+        DateTime(hoje.year, hoje.month, hoje.day);
 
     final proximaData = DateTime(
       proximaRega.year,
@@ -580,7 +747,8 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       proximaRega.day,
     );
 
-    final diferenca = proximaData.difference(hojeData).inDays;
+    final diferenca =
+        proximaData.difference(hojeData).inDays;
 
     if (diferenca < 0) {
       return 'Atrasada há ${diferenca.abs()} '
@@ -619,7 +787,11 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: verdeEscuro),
+          Icon(
+            icon,
+            size: 22,
+            color: _corIcone,
+          ),
 
           const SizedBox(height: 8),
 
@@ -627,8 +799,8 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: verdeEscuro,
+            style: TextStyle(
+              color: _texto,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -638,7 +810,10 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
           Text(
             subtitle,
-            style: const TextStyle(color: verdeEscuro, fontSize: 12),
+            style: TextStyle(
+              color: _textoSecundario,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -666,14 +841,18 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: verdeEscuro),
+          Icon(
+            icon,
+            size: 22,
+            color: _corIcone,
+          ),
 
           const SizedBox(height: 4),
 
           Text(
             value,
-            style: const TextStyle(
-              color: verdeEscuro,
+            style: TextStyle(
+              color: _texto,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -681,7 +860,13 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
           const SizedBox(height: 2),
 
-          Text(label, style: const TextStyle(color: verdeEscuro, fontSize: 12)),
+          Text(
+            label,
+            style: TextStyle(
+              color: _textoSecundario,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
