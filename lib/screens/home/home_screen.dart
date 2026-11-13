@@ -226,13 +226,30 @@ class HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final tema = Theme.of(context);
+        final escuro = tema.brightness == Brightness.dark;
+
+        final fundo = escuro ? const Color(0xFF172F32) : fundoBege;
+
+        final textoPrincipal = escuro ? const Color(0xFFF5F0DF) : verdeEscuro;
+
+        final textoSecundario = escuro
+            ? const Color(0xFFD0DDD7)
+            : textoCardEscuro;
+
+        final fundoItem = escuro
+            ? const Color(0xFF254246)
+            : Colors.white.withValues(alpha: 0.55);
+
+        final corIcone = escuro ? verdeBase : verdeAcao;
+
         return Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.75,
           ),
-          decoration: const BoxDecoration(
-            color: fundoBege,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: fundo,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SafeArea(
             child: SingleChildScrollView(
@@ -256,17 +273,17 @@ class HomeScreenState extends State<HomeScreen> {
 
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.notifications_active_outlined,
-                        color: verdeEscuro,
+                        color: textoPrincipal,
                         size: 26,
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Notificações',
                           style: TextStyle(
-                            color: verdeEscuro,
+                            color: textoPrincipal,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
@@ -274,34 +291,34 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, color: verdeEscuro),
+                        icon: Icon(Icons.close, color: textoPrincipal),
                       ),
                     ],
                   ),
 
-                  const Text(
+                  Text(
                     'Confira os lembretes de rega das suas plantas.',
-                    style: TextStyle(color: textoCardEscuro, fontSize: 14),
+                    style: TextStyle(color: textoSecundario, fontSize: 14),
                   ),
 
                   const SizedBox(height: 20),
 
                   if (_regasAtuais.isEmpty)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
+                        padding: const EdgeInsets.symmetric(vertical: 30),
                         child: Column(
                           children: [
                             Icon(
                               Icons.notifications_off_outlined,
                               size: 45,
-                              color: verdeBase,
+                              color: corIcone,
                             ),
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Text(
                               'Nenhum lembrete no momento.',
                               style: TextStyle(
-                                color: verdeEscuro,
+                                color: textoPrincipal,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -314,18 +331,21 @@ class HomeScreenState extends State<HomeScreen> {
                       'Regas atrasadas',
                       atrasadas,
                       Icons.warning_amber_rounded,
+                      escuro: escuro,
                     ),
 
                     _buildGrupoNotificacoes(
                       'Regas para hoje',
                       paraHoje,
                       Icons.water_drop_outlined,
+                      escuro: escuro,
                     ),
 
                     _buildGrupoNotificacoes(
                       'Regas para amanhã',
                       paraAmanha,
                       Icons.calendar_today_outlined,
+                      escuro: escuro,
                     ),
                   ],
 
@@ -339,8 +359,10 @@ class HomeScreenState extends State<HomeScreen> {
                         widget.onNavigateToTab?.call(1);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: verdeEscuro,
-                        foregroundColor: fundoBege,
+                        backgroundColor: escuro ? verdeBase : verdeEscuro,
+                        foregroundColor: escuro
+                            ? const Color(0xFF102A2E)
+                            : fundoBege,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -361,11 +383,22 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _buildGrupoNotificacoes(
     String titulo,
     List<_PlantaComRega> regas,
-    IconData icone,
-  ) {
+    IconData icone, {
+    required bool escuro,
+  }) {
     if (regas.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    final corTitulo = escuro ? const Color(0xFFF5F0DF) : verdeEscuro;
+
+    final corTexto = escuro ? const Color(0xFFD0DDD7) : textoCardEscuro;
+
+    final corFundo = escuro
+        ? const Color(0xFF254246)
+        : Colors.white.withValues(alpha: 0.55);
+
+    final corIcone = escuro ? verdeBase : verdeAcao;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,8 +407,8 @@ class HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.only(bottom: 8, top: 12),
           child: Text(
             titulo,
-            style: const TextStyle(
-              color: verdeEscuro,
+            style: TextStyle(
+              color: corTitulo,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -387,31 +420,32 @@ class HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.55),
+              color: corFundo,
               borderRadius: BorderRadius.circular(14),
+              border: escuro
+                  ? Border.all(color: const Color(0xFF385B59), width: 0.8)
+                  : null,
             ),
             child: Row(
               children: [
-                Icon(icone, color: verdeAcao, size: 24),
+                Icon(icone, color: corIcone, size: 24),
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         rega.planta.name,
-                        style: const TextStyle(
-                          color: verdeEscuro,
+                        style: TextStyle(
+                          color: corTitulo,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         _textoPrazo(rega),
-                        style: const TextStyle(
-                          color: textoCardEscuro,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: corTexto, fontSize: 13),
                       ),
                     ],
                   ),

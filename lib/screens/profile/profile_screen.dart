@@ -954,24 +954,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   tema.isDarkMode
                       ? Icons.nightlight_outlined
                       : Icons.wb_sunny_outlined,
-                  color: corTexto,
+                  color: tema.isDarkMode ? Colors.white : corTexto,
                   size: 22,
                 ),
                 title: Text(
                   'Tema',
                   style: TextStyle(
-                    color: corTexto,
+                    color: tema.isDarkMode ? Colors.white : corTexto,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  tema.isDarkMode
-                      ? 'Tema escuro ativado'
-                      : 'Tema claro ativado',
+                  'Ativar ou desativar o modo escuro.',
                   style: TextStyle(
-                    color: corTexto.withValues(alpha: 0.75),
-                    fontSize: 11,
+                    color: tema.isDarkMode ? Colors.white70 : corTexto,
+                    fontSize: 12,
                   ),
                 ),
                 value: tema.isDarkMode,
